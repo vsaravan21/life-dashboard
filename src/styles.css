@@ -307,9 +307,73 @@ a.cover-link:hover { text-decoration: underline; text-decoration-thickness: 1.5p
 .cal-side { padding: 20px 20px 22px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 @media (min-width: 1100px) { .cal-side { position: sticky; top: calc(24px + env(safe-area-inset-top, 0px)); } }
 .cal-side h2 { margin: -4px 0 4px; font-weight: 500; font-size: 20px; }
-.cal-add { display: flex; gap: 6px; flex-wrap: wrap; }
-.cal-add input { font: inherit; font-size: 13.5px; color: var(--ink); background: var(--solid); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; min-width: 0; flex: 1 1 140px; }
-.cal-add input[type="time"] { flex: 0 1 110px; }
+.cal-add-btn { align-self: flex-start; }
+ul.cal-items { gap: 4px; }
+ul.cal-items li { padding: 0; border: 0; }
+.cal-item { width: 100%; display: flex; gap: 10px; align-items: stretch; text-align: left; border: 0; background: transparent; color: var(--ink);
+  border-radius: 14px; padding: 8px 10px; font: inherit; }
+.cal-item:hover { background: var(--solid); }
+.cal-item .grow1 { display: flex; flex-direction: column; min-width: 0; }
+.cal-item .t { font-weight: 500; }
+.cal-bar-color { width: 4px; border-radius: 4px; flex: none; }
+button.linkish { border: 0; background: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+button.linkish:hover { color: var(--accent); }
+.sub button.linkish { color: var(--accent); text-decoration: underline; }
+
+/* event editor */
+.ev-dialog { padding: 0; width: min(620px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); color: var(--ink); background: var(--bg);
+  background-image: linear-gradient(160deg, var(--glass-edge), transparent 45%), radial-gradient(70% 50% at 100% 100%, var(--glow-b), transparent 70%);
+  overflow: hidden; }
+.ev-dialog[open] { display: flex; }
+.ev-dialog::backdrop { background: rgba(42,30,50,.28); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.ev-form { display: flex; flex-direction: column; gap: 12px; padding: 18px 22px 18px; overflow-y: auto; width: 100%; }
+.ev-head { display: flex; align-items: center; justify-content: space-between; }
+.ev-head .x { opacity: .7; font-size: 20px; }
+.ev-body { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.ev-row { display: flex; gap: 12px; align-items: flex-start; }
+.ev-icon { width: 22px; flex: none; padding-top: 7px; color: var(--muted); }
+.ev-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ev-field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.ev-form input:not([type="checkbox"]), .ev-form select, .ev-form textarea {
+  font: inherit; font-size: 13.5px; color: var(--ink); background: var(--solid); border: 1px solid var(--line); border-radius: 999px;
+  padding: 7px 12px; min-width: 0; max-width: 100%; }
+.ev-form input.ev-title { border-radius: 0; background: transparent; border: 0; border-bottom: 2px solid var(--line); font-size: 22px; font-weight: 600;
+  padding: 4px 2px 8px; outline: none; width: 100%; }
+.ev-form input.ev-title:focus { border-bottom-color: var(--accent); }
+.ev-form textarea { border-radius: 18px; resize: vertical; min-height: 72px; }
+.ev-form input.num { width: 64px; }
+.ev-form fieldset:disabled { opacity: .8; }
+.ev-when { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px 10px; }
+.ev-lbl { font-size: 12.5px; color: var(--muted); font-weight: 500; }
+.ev-pair { display: flex; gap: 6px; flex-wrap: wrap; }
+.ev-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13.5px; }
+.ev-check { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; }
+.ev-check input { width: 17px; height: 17px; accent-color: var(--accent); margin: 0; }
+.ev-repeat { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 18px; background: var(--glass-edge); }
+.ev-days { display: flex; gap: 6px; }
+.ev-days button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--solid); color: var(--ink);
+  font: inherit; font-size: 12.5px; font-weight: 600; }
+.ev-days button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ev-reminders { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.ev-colors { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+.ev-colors .sw { width: 24px; height: 24px; border-radius: 50%; border: 0; padding: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.ev-colors .sw.on { box-shadow: 0 0 0 2px var(--solid), 0 0 0 4px var(--ink); }
+.ev-hint { margin: -4px 0 0 34px; }
+.ev-notice { padding: 10px 14px; }
+.seg { display: inline-flex; align-self: flex-start; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: var(--glass-edge); }
+.seg button { border: 0; background: transparent; border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 13px; font-weight: 500; color: var(--ink); }
+.seg button.on { background: var(--solid); color: var(--accent); box-shadow: 0 4px 12px -8px rgba(96,72,110,.5); }
+.ev-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-top: 4px; }
+.ev-foot .btn { padding: 7px 16px; font-size: 13.5px; }
+.ev-foot .grow1 { flex: 1; }
+.btn.danger { background: var(--bad); color: #fff; }
+.btn.danger:hover { color: #fff; }
+@media (max-width: 560px) {
+  .ev-dialog { width: 100vw; max-width: 100vw; max-height: 100dvh; height: 100dvh; margin: 0; border-radius: 0; border-width: 0; }
+  .ev-form { padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .ev-row { gap: 8px; }
+  .ev-hint { margin-left: 30px; }
+}
 
 /* notes page */
 .notes-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
@@ -338,8 +402,6 @@ a.cover-link:hover { text-decoration: underline; text-decoration-thickness: 1.5p
   .notes-layout.has-open .notes-list { display: none; }
   .notes-back { display: inline-block; }
 }
-.cal-add input[name="title"] { flex-basis: 100%; }
-.cal-add .btn { flex: none; }
 @media (max-width: 720px) {
   .page-cover { flex-direction: column; align-items: flex-start; min-height: 0; padding: 16px 16px 18px; }
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { connect, disconnect, fetchEvents, googleClientId, hasToken, wasConnected, type GoogleEvent } from "./google";
+import { canWrite, connect, disconnect, fetchCalendars, fetchEvents, googleClientId, hasToken, wasConnected, type GoogleCalendarInfo, type GoogleEvent } from "./google";
 
 export type GoogleStatus =
   | "unavailable" // no client ID configured
@@ -11,9 +11,14 @@ export type GoogleStatus =
 export interface GoogleCalendar {
   status: GoogleStatus;
   events: GoogleEvent[];
+  calendars: GoogleCalendarInfo[];
+  /** The user allowed the app to add and change events. */
+  canWrite: boolean;
   error: string | null;
   connect(): Promise<void>;
   disconnect(): void;
+  /** Load events again now, for example after saving one. */
+  reload(): Promise<void>;
 }
 
 const REFRESH_MS = 10 * 60_000;
@@ -25,6 +30,7 @@ const initialStatus = (): GoogleStatus =>
 export function useGoogleCalendar(from: string, to: string): GoogleCalendar {
   const [status, setStatus] = useState<GoogleStatus>(initialStatus);
   const [events, setEvents] = useState<GoogleEvent[]>([]);
+  const [calendars, setCalendars] = useState<GoogleCalendarInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
   const range = useRef({ from, to });
   range.current = { from, to };
@@ -32,8 +38,10 @@ export function useGoogleCalendar(from: string, to: string): GoogleCalendar {
   const load = useCallback(async () => {
     const { from, to } = range.current;
     try {
-      const evs = await fetchEvents(from, to);
+      const cals = await fetchCalendars();
+      const evs = await fetchEvents(from, to, cals);
       if (range.current.from !== from || range.current.to !== to) return; // a newer range is loading
+      setCalendars(cals);
       setEvents(evs);
       setStatus("on");
       setError(null);
@@ -58,6 +66,7 @@ export function useGoogleCalendar(from: string, to: string): GoogleCalendar {
   const doDisconnect = useCallback(() => {
     disconnect();
     setEvents([]);
+    setCalendars([]);
     setError(null);
     setStatus("off");
   }, []);
@@ -76,5 +85,5 @@ export function useGoogleCalendar(from: string, to: string): GoogleCalendar {
     return () => { window.clearInterval(id); document.removeEventListener("visibilitychange", onVisible); };
   }, [status, load]);
 
-  return { status, events, error, connect: doConnect, disconnect: doDisconnect };
+  return { status, events, calendars, canWrite: status === "on" && canWrite(), error, connect: doConnect, disconnect: doDisconnect, reload: load };
 }

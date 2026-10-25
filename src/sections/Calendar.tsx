@@ -1,5 +1,6 @@
-import { Fragment } from "react";
-import { AddForm, DateField, Empty, Panel, Remove } from "../components/ui";
+import { Fragment, useState } from "react";
+import { EventEditor, type EditTarget } from "../components/EventEditor";
+import { Empty, Panel, Remove } from "../components/ui";
 import { addDays, daysBetween, fmt, iso, parse, today } from "../lib/dates";
 import type { GoogleEvent } from "../lib/google";
 import type { Entry } from "../lib/types";
@@ -24,6 +25,7 @@ export function Calendar({ dash }: { dash: Dashboard }) {
   const t = today();
   const g = useGoogleCalendar(t, iso(addDays(parse(t), 14)));
   const inRange = (d: string) => d >= t && daysBetween(t, d) <= 13;
+  const [editing, setEditing] = useState<EditTarget | null>(null);
 
   const items: Item[] = [
     ...dash.entries.events.filter(e => inRange(e.data.date)).map(e => ({
@@ -39,13 +41,7 @@ export function Calendar({ dash }: { dash: Dashboard }) {
 
   return (
     <Panel id="p-events" title="Calendar" cover="c-events" label="Next 14 days" addLabel="Add event" extra={<GoogleControl g={g} />}
-      form={close => (
-        <AddForm onClose={close} onSave={v => dash.add("events", { title: v.title.trim(), date: v.date, time: v.time || "" })}>
-          <input className="grow" name="title" placeholder="What's happening?" required aria-label="Event" />
-          <DateField name="date" label="Date" />
-          <input type="time" name="time" aria-label="Time (optional)" />
-        </AddForm>
-      )}>
+      form={close => <EventEditor target={{ kind: "new", date: t }} dash={dash} g={g} onClose={close} />}>
       {g.error && <p className="err">{g.error}</p>}
       {g.status === "paused" && !g.error && <p className="sub">Tap Sync to show your Google Calendar events again.</p>}
       <div className="week">
@@ -72,11 +68,11 @@ export function Calendar({ dash }: { dash: Dashboard }) {
                     <li key={e.key}>
                       <span className="time">{e.time || "all day"}</span>
                       {e.source === "local" ? <>
-                        <span className="grow1 t">{e.title}</span>
+                        <span className="grow1 t"><button className="linkish" onClick={() => setEditing({ kind: "local", entry: e.entry })}>{e.title}</button></span>
                         <Remove label={e.title} onClick={() => dash.remove(e.entry)} />
                       </> : <>
                         <span className="grow1 t">
-                          {e.event.link ? <a className="plain" href={e.event.link} target="_blank" rel="noreferrer">{e.title}</a> : e.title}
+                          <button className="linkish" onClick={() => setEditing({ kind: "google", event: e.event })}>{e.title}</button>
                           <div className="sub"><i className="cal-dot" style={{ background: e.event.color || "var(--accent)" }} />{e.event.calendar}</div>
                         </span>
                       </>}
@@ -88,6 +84,7 @@ export function Calendar({ dash }: { dash: Dashboard }) {
           })}
         </div>
       )}
+      {editing && <EventEditor target={editing} dash={dash} g={g} onClose={() => setEditing(null)} />}
     </Panel>
   );
 }

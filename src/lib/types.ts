@@ -2,7 +2,18 @@ export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "jo
 export type Kind = (typeof KINDS)[number];
 
 /** Dates are local calendar days as "YYYY-MM-DD"; times are "HH:MM". */
-export interface EventData { title: string; date: string; time?: string }
+export interface EventData {
+  title: string;
+  date: string;
+  /** "" for all-day events. */
+  time?: string;
+  allDay?: boolean;
+  /** Last day (inclusive) and end time; older events have neither. */
+  endDate?: string;
+  endTime?: string;
+  location?: string;
+  description?: string;
+}
 export interface TodoData { text: string; due?: string; done: boolean; doneAt?: number | null }
 export interface MoneyData { label: string; amount: number; kind: "expense" | "income"; category?: string; date: string }
 export interface GoalData { title: string; target?: string; progress: number }

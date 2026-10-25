@@ -3,8 +3,8 @@ import { toGoogleEvent } from "./google";
 
 describe("toGoogleEvent", () => {
   it("keeps all-day events on their date with no time", () => {
-    expect(toGoogleEvent({ id: "a", summary: "Holiday", start: { date: "2026-10-30" } }, "Personal"))
-      .toMatchObject({ date: "2026-10-30", time: "", title: "Holiday", calendar: "Personal" });
+    expect(toGoogleEvent({ id: "a", summary: "Holiday", start: { date: "2026-10-30" }, end: { date: "2026-10-31" } }, "Personal"))
+      .toMatchObject({ date: "2026-10-30", endDate: "2026-10-30", allDay: true, time: "", title: "Holiday", calendar: "Personal" });
   });
 
   it("converts timed events to the local day and time", () => {

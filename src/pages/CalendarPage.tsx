@@ -1,6 +1,8 @@
-import { useMemo, useState, type FormEvent } from "react";
-import { Empty, Remove } from "../components/ui";
-import { addDays, fmt, iso, parse, today } from "../lib/dates";
+import { useMemo, useState } from "react";
+import { EventEditor, type EditTarget } from "../components/EventEditor";
+import { Empty } from "../components/ui";
+import { addDays, daysBetween, fmt, iso, parse, today } from "../lib/dates";
+import { timeRange } from "../lib/eventDraft";
 import type { GoogleEvent } from "../lib/google";
 import type { Entry } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
@@ -8,9 +10,8 @@ import { useGoogleCalendar } from "../lib/useGoogleCalendar";
 import { GoogleControl } from "../sections/Calendar";
 import { PageShell } from "./PageShell";
 
-type Item =
-  | { key: string; date: string; time: string; title: string; color?: string; source: "local"; entry: Entry<"events"> }
-  | { key: string; date: string; time: string; title: string; color?: string; source: "google"; event: GoogleEvent };
+interface Base { key: string; date: string; time: string; endDate: string; endTime: string; allDay: boolean; title: string; color?: string }
+type Item = Base & ({ source: "local"; entry: Entry<"events"> } | { source: "google"; event: GoogleEvent });
 
 const firstOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
 
@@ -18,6 +19,7 @@ export function CalendarPage({ dash }: { dash: Dashboard }) {
   const t = today();
   const [month, setMonth] = useState(() => firstOfMonth(new Date()));
   const [selected, setSelected] = useState(t);
+  const [editing, setEditing] = useState<EditTarget | null>(null);
 
   // Six full weeks, Sunday first, covering the shown month.
   const gridStart = addDays(month, -month.getDay());
@@ -27,15 +29,25 @@ export function CalendarPage({ dash }: { dash: Dashboard }) {
 
   const byDay = useMemo(() => {
     const items: Item[] = [
-      ...dash.entries.events.filter(e => e.data.date >= from && e.data.date < to).map(e => ({
-        key: e.id, date: e.data.date, time: e.data.time || "", title: e.data.title, source: "local" as const, entry: e,
+      ...dash.entries.events.map(e => ({
+        key: e.id, date: e.data.date, time: e.data.time || "", endDate: e.data.endDate || e.data.date, endTime: e.data.endTime || "",
+        allDay: e.data.allDay ?? !e.data.time, title: e.data.title, source: "local" as const, entry: e,
       })),
-      ...g.events.filter(e => e.date >= from && e.date < to).map(e => ({
-        key: `g:${e.id}`, date: e.date, time: e.time, title: e.title, color: e.color, source: "google" as const, event: e,
+      ...g.events.map(e => ({
+        key: `g:${e.id}`, date: e.date, time: e.time, endDate: e.endDate, endTime: e.endTime, allDay: e.allDay,
+        title: e.title, color: e.color, source: "google" as const, event: e,
       })),
-    ].sort((a, b) => a.date.localeCompare(b.date) || (a.time || "").localeCompare(b.time || ""));
+    ].filter(it => it.endDate >= from && it.date < to)
+      .sort((a, b) => Number(b.allDay) - Number(a.allDay) || a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+    // An event that spans days shows on each of them; a timed one that ends at midnight doesn't spill into the next day.
     const map = new Map<string, Item[]>();
-    for (const it of items) map.set(it.date, [...(map.get(it.date) ?? []), it]);
+    for (const it of items) {
+      const last = !it.allDay && it.endDate > it.date && it.endTime === "00:00" ? iso(addDays(parse(it.endDate), -1)) : it.endDate;
+      for (let i = 0, n = Math.min(daysBetween(it.date, last), 60); i <= n; i++) {
+        const day = iso(addDays(parse(it.date), i));
+        map.set(day, [...(map.get(day) ?? []), it]);
+      }
+    }
     return map;
   }, [dash.entries.events, g.events, from, to]);
 
@@ -48,17 +60,13 @@ export function CalendarPage({ dash }: { dash: Dashboard }) {
   };
 
   const dayItems = byDay.get(selected) ?? [];
-  const addEvent = async (ev: FormEvent<HTMLFormElement>) => {
-    ev.preventDefault();
-    const form = ev.currentTarget, f = new FormData(form);
-    const title = String(f.get("title") || "").trim();
-    if (!title) return;
-    await dash.add("events", { title, date: selected, time: String(f.get("time") || "") });
-    form.reset();
-  };
+  const open = (it: Item) => setEditing(it.source === "local" ? { kind: "local", entry: it.entry } : { kind: "google", event: it.event });
 
   return (
-    <PageShell path="/calendar" actions={<GoogleControl g={g} />}>
+    <PageShell path="/calendar" actions={<>
+      <GoogleControl g={g} />
+      <button className="btn primary" onClick={() => setEditing({ kind: "new", date: selected })}>+ New event</button>
+    </>}>
       {g.error && <div className="notice"><span className="err">{g.error}</span></div>}
       <div className="cal-layout">
         <section className="glass cal-month">
@@ -86,7 +94,7 @@ export function CalendarPage({ dash }: { dash: Dashboard }) {
                     {items.slice(0, 3).map(it => (
                       <span key={it.key} className="cal-chip">
                         <i className="cal-dot" style={{ background: it.color || "var(--accent)" }} />
-                        {it.time && <b>{it.time}</b>}{it.title}
+                        {it.time && !it.allDay && it.date === d && <b>{it.time}</b>}{it.title}
                       </span>
                     ))}
                     {items.length > 3 && <span className="cal-more">+{items.length - 3} more</span>}
@@ -101,23 +109,20 @@ export function CalendarPage({ dash }: { dash: Dashboard }) {
         <aside className="glass cal-side">
           <div className="label">{selected === t ? "Today" : fmt(selected, { weekday: "long" })}</div>
           <h2>{fmt(selected, { month: "long", day: "numeric", year: "numeric" })}</h2>
-          <form className="cal-add" onSubmit={addEvent}>
-            <input name="title" placeholder="Add an event" aria-label="New event title" required />
-            <input type="time" name="time" aria-label="Time (optional)" />
-            <button className="btn primary" aria-label="Add event">Add</button>
-          </form>
+          <button className="btn cal-add-btn" onClick={() => setEditing({ kind: "new", date: selected })}>+ Add an event on {fmt(selected, { month: "short", day: "numeric" })}</button>
           {dayItems.length === 0 ? <Empty>Nothing planned.</Empty> : (
-            <ul className="list">
+            <ul className="list cal-items">
               {dayItems.map(it => (
                 <li key={it.key}>
-                  <span className="time">{it.time || "all day"}</span>
-                  <span className="grow1 t">
-                    {it.source === "google" && it.event.link
-                      ? <a className="plain" href={it.event.link} target="_blank" rel="noreferrer">{it.title}</a>
-                      : it.title}
-                    {it.source === "google" && <div className="sub"><i className="cal-dot" style={{ background: it.color || "var(--accent)" }} />{it.event.calendar}</div>}
-                  </span>
-                  {it.source === "local" && <Remove label={it.title} onClick={() => dash.remove(it.entry)} />}
+                  <button className="cal-item" onClick={() => open(it)}>
+                    <i className="cal-bar-color" style={{ background: it.color || "var(--accent)" }} />
+                    <span className="grow1">
+                      <span className="t">{it.title}</span>
+                      <span className="sub">{timeRange(it)}{it.source === "google" ? ` · ${it.event.calendar}` : " · Dashboard"}</span>
+                      {(it.source === "google" ? it.event.location : it.entry.data.location) &&
+                        <span className="sub">{it.source === "google" ? it.event.location : it.entry.data.location}</span>}
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -125,6 +130,7 @@ export function CalendarPage({ dash }: { dash: Dashboard }) {
           {g.status === "paused" && <p className="sub">Tap Sync Google Calendar to show your Google events.</p>}
         </aside>
       </div>
+      {editing && <EventEditor target={editing} dash={dash} g={g} onClose={() => setEditing(null)} />}
     </PageShell>
   );
 }
