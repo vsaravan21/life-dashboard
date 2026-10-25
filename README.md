@@ -29,6 +29,18 @@ Without Supabase keys the app runs in **demo mode**: it fills itself with exampl
 
 The anon key is meant to be public. Row-level security is what keeps your data private, so never put the `service_role` key in this app.
 
+## Connect Google Calendar
+
+The Calendar section can show your Google Calendar events next to the ones you add by hand. It only reads them; nothing is written back. It runs entirely in the browser, so it needs a Google OAuth client ID:
+
+1. Open the [Google Cloud console](https://console.cloud.google.com/) and create a project (any name).
+2. Go to **APIs & Services → Library**, search for **Google Calendar API**, and click **Enable**.
+3. Go to **APIs & Services → OAuth consent screen** (or **Google Auth Platform**). Choose **External**, fill in the app name and your email, and add your own Google account under **Test users**.
+4. Go to **Credentials → Create credentials → OAuth client ID**, choose **Web application**, and under **Authorized JavaScript origins** add `http://localhost:5173` and your site's address (for example `https://life-dashboard-nine-tau.vercel.app`).
+5. Copy the client ID (it ends in `.apps.googleusercontent.com`) into `VITE_GOOGLE_CLIENT_ID` in `.env.local`, and into `.env.production` for the live site.
+
+The client ID is public; it only works from the origins you listed. Google's sign-in lasts about an hour, after which the section shows a **Sync Google Calendar** button to refresh it with one tap. While the app is in Google's "testing" mode, only the test users you added can connect.
+
 ## Publish the website
 
 Any static host works. With [Vercel](https://vercel.com) or [Netlify](https://netlify.com):
