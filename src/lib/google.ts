@@ -87,8 +87,22 @@ async function get<T>(path: string, params: Record<string, string> = {}): Promis
   if (!hasToken()) throw new Error("expired");
   const res = await fetch(`${API}${path}?${new URLSearchParams(params)}`, { headers: { Authorization: `Bearer ${token!.value}` } });
   if (res.status === 401) { token = null; throw new Error("expired"); }
-  if (!res.ok) throw new Error(`Google Calendar returned an error (${res.status}).`);
+  if (!res.ok) throw new Error(await explain(res));
   return res.json() as Promise<T>;
+}
+
+/** Turn a Calendar API error into a message that says what to fix. */
+async function explain(res: Response): Promise<string> {
+  let reason = "";
+  try {
+    const body = await res.json() as { error?: { errors?: { reason?: string }[]; status?: string } };
+    reason = body.error?.errors?.[0]?.reason || body.error?.status || "";
+  } catch { /* not JSON */ }
+  if (reason === "accessNotConfigured" || reason === "SERVICE_DISABLED")
+    return "The Google Calendar API is turned off for this Google Cloud project. Enable it, then tap Sync.";
+  if (reason === "insufficientPermissions" || reason === "ACCESS_TOKEN_SCOPE_INSUFFICIENT" || reason === "PERMISSION_DENIED")
+    return "Google didn't grant calendar access. Disconnect, connect again, and tick the calendar permission.";
+  return `Google Calendar returned an error (${res.status}${reason ? `: ${reason}` : ""}).`;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
