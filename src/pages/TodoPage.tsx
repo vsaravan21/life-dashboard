@@ -4,26 +4,27 @@ import type { Entry } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
 import { PageShell } from "./PageShell";
 
-/** List colors: the card background, and whether it needs light text. */
-export const LIST_COLORS: Record<string, { name: string; bg: string; dark: boolean }> = {
-  navy: { name: "Midnight", bg: "#1f2044", dark: true },
-  plum: { name: "Plum", bg: "#3a2343", dark: true },
-  coral: { name: "Coral", bg: "#f6a58f", dark: false },
-  peach: { name: "Peach", bg: "#fde1d3", dark: false },
-  pink: { name: "Blush", bg: "#f9d3df", dark: false },
-  lavender: { name: "Lavender", bg: "#e3d6f5", dark: false },
-  sage: { name: "Sage", bg: "#d7ead8", dark: false },
-  sky: { name: "Sky", bg: "#d4e6f5", dark: false },
-  butter: { name: "Butter", bg: "#fbefc4", dark: false },
+/** List colors: the same blurred pastel paints as the section covers. */
+export const LIST_COLORS: Record<string, { name: string; cover: string }> = {
+  blush: { name: "Blush", cover: "c-events" },
+  peach: { name: "Peach", cover: "c-todos" },
+  mint: { name: "Mint", cover: "c-money" },
+  periwinkle: { name: "Periwinkle", cover: "c-goals" },
+  sunset: { name: "Sunset", cover: "c-trips" },
+  orchid: { name: "Orchid", cover: "c-books" },
+  honey: { name: "Honey", cover: "c-wins" },
+  prism: { name: "Prism", cover: "c-journal" },
+  petal: { name: "Petal", cover: "c-notes" },
 };
-const colorOf = (c: string) => LIST_COLORS[c] ?? LIST_COLORS.navy;
+const DEFAULT_COLOR = "peach";
+const colorOf = (c: string) => LIST_COLORS[c] ?? LIST_COLORS[DEFAULT_COLOR];
 
 function Swatches({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
     <div className="ev-colors" role="radiogroup" aria-label="List color">
       {Object.entries(LIST_COLORS).map(([id, c]) => (
         <button type="button" key={id} role="radio" aria-checked={value === id} title={c.name} aria-label={c.name}
-          className={"sw" + (value === id ? " on" : "")} style={{ background: c.bg }} onClick={() => onChange(id)} />
+          className={`sw paint ${c.cover}` + (value === id ? " on" : "")} onClick={() => onChange(id)} />
       ))}
     </div>
   );
@@ -32,7 +33,7 @@ function Swatches({ value, onChange }: { value: string; onChange: (c: string) =>
 const Check = ({ done }: { done: boolean }) => (
   <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
     <circle cx="12" cy="12" r="10" fill={done ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.6" />
-    {done && <path d="m7.5 12.3 3 3 6-6.3" fill="none" stroke="var(--list-bg)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />}
+    {done && <path d="m7.5 12.3 3 3 6-6.3" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />}
   </svg>
 );
 
@@ -69,7 +70,7 @@ function ListCard({ list, tasks, dash, focusNew }: { list: Entry<"lists"> | null
   useEffect(() => { if (focusNew) newRef.current?.focus(); }, [focusNew]);
   useEffect(() => { if (list) setTitle(list.data.title); }, [list?.data.title]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const c = colorOf(list?.data.color ?? "lavender");
+  const c = colorOf(list?.data.color ?? "petal");
   const add = () => {
     const text = draft.trim();
     if (!text) return;
@@ -91,8 +92,8 @@ function ListCard({ list, tasks, dash, focusNew }: { list: Entry<"lists"> | null
   const done = tasks.filter(t => t.data.done).length;
 
   return (
-    <section className={"tl-card" + (c.dark ? " dark" : "")} style={{ ["--list-bg" as string]: c.bg }} aria-label={title}>
-      <header className="tl-head">
+    <section className="glass tl-card" aria-label={title}>
+      <header className={`cover tl-head ${c.cover}`}>
         <div className="tl-heading">
           {list
             ? <input className="tl-title" value={title} aria-label="List name" onChange={e => setTitle(e.target.value)} onBlur={saveTitle}
@@ -131,7 +132,7 @@ function ListCard({ list, tasks, dash, focusNew }: { list: Entry<"lists"> | null
 export function TodoPage({ dash }: { dash: Dashboard }) {
   const [composing, setComposing] = useState(false);
   const [name, setName] = useState("");
-  const [color, setColor] = useState("navy");
+  const [color, setColor] = useState(DEFAULT_COLOR);
   const [fresh, setFresh] = useState<string | null>(null);
 
   const lists = [...dash.entries.lists].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -150,10 +151,14 @@ export function TodoPage({ dash }: { dash: Dashboard }) {
     <PageShell path="/todo" actions={<button className="btn primary" onClick={() => setComposing(true)}>+ New list</button>}>
       <div className="tl-grid">
         {composing && (
-          <form className={"tl-card tl-compose" + (colorOf(color).dark ? " dark" : "")} style={{ ["--list-bg" as string]: colorOf(color).bg }}
-            onSubmit={e => { e.preventDefault(); create(); }}>
-            <input className="tl-title" autoFocus value={name} placeholder="Name your list" aria-label="List name" onChange={e => setName(e.target.value)} />
-            <span className="tl-date">Created {fmt(today(), { month: "short", day: "numeric", year: "numeric" })}</span>
+          <form className="glass tl-card tl-compose" onSubmit={e => { e.preventDefault(); create(); }}>
+            <div className={`cover tl-head ${colorOf(color).cover}`}>
+              <div className="tl-heading">
+                <input className="tl-title" autoFocus value={name} placeholder="Name your list" aria-label="List name" onChange={e => setName(e.target.value)} />
+                <span className="tl-date">Created {fmt(today(), { month: "short", day: "numeric", year: "numeric" })}</span>
+              </div>
+            </div>
+            <span className="label">Color</span>
             <Swatches value={color} onChange={setColor} />
             <div className="tl-compose-acts">
               <button type="button" className="btn" onClick={() => setComposing(false)}>Cancel</button>
