@@ -33,7 +33,7 @@ Any static host works. With [Vercel](https://vercel.com) or [Netlify](https://ne
 
 1. Import this GitHub repository.
 2. Build command `npm run build`, output directory `dist`.
-3. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as environment variables.
+3. The Supabase URL and publishable key are already in `.env.production`, so no environment variables are needed. (Set them in the host instead if you ever point at a different project.)
 4. After the first deploy, add the site's URL to Supabase's Site URL and redirect URLs (step 3 above).
 
 ## Project layout
