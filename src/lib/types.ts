@@ -1,4 +1,4 @@
-export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "journal", "wins", "notes"] as const;
+export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "journal", "wins", "notes", "lists"] as const;
 export type Kind = (typeof KINDS)[number];
 
 /** Dates are local calendar days as "YYYY-MM-DD"; times are "HH:MM". */
@@ -14,7 +14,9 @@ export interface EventData {
   location?: string;
   description?: string;
 }
-export interface TodoData { text: string; due?: string; done: boolean; doneAt?: number | null }
+export interface TodoData { text: string; due?: string; done: boolean; doneAt?: number | null; /** The to-do list it belongs to; none for loose tasks. */ listId?: string }
+/** A named, colored to-do list on the To-do page. `created` is a local day. */
+export interface ListData { title: string; color: string; created: string }
 export interface MoneyData { label: string; amount: number; kind: "expense" | "income"; category?: string; date: string }
 export interface GoalData { title: string; target?: string; progress: number }
 export interface TripData { place: string; start: string; end: string; note?: string }
@@ -33,6 +35,7 @@ export interface DataByKind {
   journal: JournalData;
   wins: WinData;
   notes: NoteData;
+  lists: ListData;
 }
 
 export interface Entry<K extends Kind = Kind> {
