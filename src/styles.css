@@ -436,3 +436,34 @@ button.linkish:hover { color: var(--accent); }
 .tl-compose { gap: 10px; }
 .tl-compose-acts { display: flex; justify-content: flex-end; gap: 8px; }
 .tl-empty { grid-column: 1 / -1; }
+
+/* finance page */
+.fin-lock { max-width: 460px; margin: 8px auto; padding: 32px 28px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+.fin-lock h2 { margin: 4px 0 0; font-weight: 500; font-size: 22px; }
+.fin-lock .sub { margin: 0; font-size: 14px; }
+.fin-lock-icon { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.fin-lock-icon svg { width: 24px; height: 24px; }
+.fin-signin { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; margin-top: 6px; }
+.fin-signin input { font: inherit; font-size: 14px; color: var(--ink); background: var(--solid); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; flex: 1 1 200px; min-width: 0; }
+.fin-signin .btn { padding: 8px 16px; font-size: 14px; }
+.fin-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fin-bar .meta { display: inline-flex; align-items: center; gap: 6px; }
+.fin-bar .grow1 { flex: 1; }
+.fin-hero { padding: 22px 24px; display: flex; align-items: center; gap: 20px 28px; flex-wrap: wrap; }
+.fin-net { font-size: clamp(28px, 4vw, 38px); font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.fin-hero .kpis { flex: 1 1 260px; margin: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.fin-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (min-width: 1100px) { .fin-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); } }
+.fin-banks { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.fin-bank, .fin-tx { padding: 16px 20px 18px; min-width: 0; }
+.fin-bank-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.fin-bank h3 { margin: 0; font-weight: 600; font-size: 16px; }
+.fin-bank .grow1, .fin-tx .grow1 { display: flex; flex-direction: column; min-width: 0; }
+.fin-amt { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fin-amt.debt { color: var(--bad); }
+.fin-amt.in { color: var(--good); }
+.fin-problem { margin: 6px 0; padding: 10px 14px; }
+.fin-tx-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.fin-tx-head h2 { margin: 0; font-weight: 500; font-size: 18px; }
+.fin-tx .note-search { max-width: 200px; }
+.fin-tx .pill { margin-left: 6px; }

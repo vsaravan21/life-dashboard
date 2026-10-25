@@ -9,6 +9,7 @@ import { useDashboard, type Dashboard } from "./lib/useDashboard";
 import { CalendarPage } from "./pages/CalendarPage";
 import { NotesPage } from "./pages/NotesPage";
 import { TodoPage } from "./pages/TodoPage";
+import { FinancePage } from "./pages/FinancePage";
 import { EmptyPage } from "./pages/PageShell";
 import { Calendar } from "./sections/Calendar";
 import { Finance } from "./sections/Finance";
@@ -113,6 +114,7 @@ function DashboardView({ store, onSignOut }: { store: Store; onSignOut?: () => v
               : route === "/calendar" ? <CalendarPage dash={dash} />
               : route === "/notes" ? <NotesPage dash={dash} />
               : route === "/todo" ? <TodoPage dash={dash} />
+              : route === "/finance" ? <FinancePage />
               : <EmptyPage path={route} />
           )}
         </main>

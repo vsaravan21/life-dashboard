@@ -43,6 +43,30 @@ The app asks for two permissions: reading your calendars and editing their event
 
 The client ID is public; it only works from the origins you listed. Google's sign-in lasts about an hour, after which the section shows a **Sync Google Calendar** button to refresh it with one tap. While the app is in Google's "testing" mode, only the test users you added can connect.
 
+## Connect banks to Finance (Plaid)
+
+The Finance page shows your real accounts, balances, net worth and recent transactions through [Plaid](https://plaid.com), which covers most US and Canadian banks, cards and investment accounts (including Betterment). It is private: it has its own email sign-in, even while the rest of the dashboard is open, and only emails you list can see it. Access is read-only; nothing here can move money.
+
+How it's kept safe:
+- Plaid's secret and each bank's access token live only on the server (`api/finance.ts`, a Vercel Function) and in the `plaid_items` table, which has row-level security on and no policies, so only the server's service-role key can read it. Neither is ever sent to the browser or committed to the repo.
+- Every request to the server must carry a Supabase session for an email in `FINANCE_EMAILS`.
+- **Disconnect** removes the connection at Plaid and deletes its token.
+
+Setup:
+1. **Plaid:** sign up at [dashboard.plaid.com](https://dashboard.plaid.com) and apply for the free **Trial** plan (up to 10 connected banks; removing one doesn't free its slot). Under **Developers → Keys**, copy the client ID and the Production secret (or the Sandbox secret to try it with fake banks first).
+2. **Supabase:**
+   - In the SQL editor, run `supabase/migrations/0004_plaid_items.sql`.
+   - Under **Authentication → URL Configuration**, set the Site URL to your site (for example `https://life-dashboard-nine-tau.vercel.app`) and add `https://life-dashboard-nine-tau.vercel.app/finance` and `http://localhost:5173/finance` to Redirect URLs.
+   - Under **Project Settings → API Keys**, copy the `service_role` (secret) key.
+3. **Vercel:** under **Settings → Environment Variables**, add these for Production, then redeploy:
+   - `PLAID_CLIENT_ID`, `PLAID_SECRET`
+   - `PLAID_ENV`: `production` (or `sandbox`)
+   - `SUPABASE_URL`: your project URL
+   - `SUPABASE_SERVICE_ROLE_KEY`: the secret key from step 2
+   - `FINANCE_EMAILS`: your email (comma-separate several)
+
+Never put the Plaid secret or service-role key in a `VITE_` variable or an `.env` file in the repo: those end up in the browser. To try the server locally, run `vercel dev` with the same variables in a gitignored `.env.local`.
+
 ## Publish the website
 
 Any static host works. With [Vercel](https://vercel.com) or [Netlify](https://netlify.com):
