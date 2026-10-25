@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { EventEditor, type EditTarget } from "../components/EventEditor";
 import { Empty } from "../components/ui";
-import { addDays, daysBetween, fmt, iso, parse, today } from "../lib/dates";
+import { addDays, clock, daysBetween, fmt, iso, parse, today } from "../lib/dates";
 import { timeRange } from "../lib/eventDraft";
 import type { GoogleEvent } from "../lib/google";
 import type { Entry } from "../lib/types";
@@ -94,7 +94,7 @@ export function CalendarPage({ dash }: { dash: Dashboard }) {
                     {items.slice(0, 3).map(it => (
                       <span key={it.key} className="cal-chip">
                         <i className="cal-dot" style={{ background: it.color || "var(--accent)" }} />
-                        {it.time && !it.allDay && it.date === d && <b>{it.time}</b>}{it.title}
+                        {it.time && !it.allDay && it.date === d && <b>{clock(it.time, true)}</b>}{it.title}
                       </span>
                     ))}
                     {items.length > 3 && <span className="cal-more">+{items.length - 3} more</span>}

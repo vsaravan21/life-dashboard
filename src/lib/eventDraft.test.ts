@@ -47,7 +47,7 @@ describe("event drafts", () => {
   });
 
   it("formats time ranges", () => {
-    expect(timeRange({ date: "2026-10-25", time: "09:30", endDate: "2026-10-25", endTime: "10:45" })).toBe("09:30 – 10:45");
+    expect(timeRange({ date: "2026-10-25", time: "09:30", endDate: "2026-10-25", endTime: "10:45" })).toBe("9:30 AM – 10:45 AM");
     expect(timeRange({ date: "2026-10-25", time: "", allDay: true, endDate: "2026-10-25" })).toBe("All day");
   });
 });

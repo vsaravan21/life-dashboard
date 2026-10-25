@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { by, dayOfYear, daysBetween, daysInYear, iso, isoWeek, parse } from "./dates";
+import { by, clock, dayOfYear, daysBetween, daysInYear, iso, isoWeek, parse } from "./dates";
 
 describe("dates", () => {
   it("round-trips local dates", () => {
@@ -28,5 +28,13 @@ describe("dates", () => {
   it("sorts empty values last", () => {
     const rows = [{ due: "" }, { due: "2026-10-30" }, { due: "2026-10-01" }];
     expect(rows.sort(by("due")).map(r => r.due)).toEqual(["2026-10-01", "2026-10-30", ""]);
+  });
+});
+
+describe("clock", () => {
+  it("uses a 12-hour clock", () => {
+    expect(["00:05", "09:30", "12:00", "13:45", "23:59"].map(t => clock(t))).toEqual(["12:05 AM", "9:30 AM", "12:00 PM", "1:45 PM", "11:59 PM"]);
+    expect(clock("13:00", true)).toBe("1pm");
+    expect(clock("09:30", true)).toBe("9:30am");
   });
 });

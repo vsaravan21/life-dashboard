@@ -2,7 +2,7 @@
  * The event editor's form state, and how it maps to and from Google Calendar
  * events and the dashboard's own events. Kept free of React so it can be tested.
  */
-import { addDays, daysBetween, iso, parse } from "./dates";
+import { addDays, clock, daysBetween, iso, parse } from "./dates";
 import type { ApiEvent, EventBody, GoogleEvent } from "./google";
 import type { EventData } from "./types";
 
@@ -224,8 +224,8 @@ export function timeRange(e: { date: string; time?: string; endDate?: string; en
   const multi = !!e.endDate && e.endDate !== e.date;
   const day = (s: string) => parse(s).toLocaleDateString(undefined, { month: "short", day: "numeric" });
   if (allDay) return multi ? `All day · until ${day(e.endDate!)}` : "All day";
-  if (!e.endTime) return e.time!;
-  return multi ? `${e.time} – ${day(e.endDate!)} ${e.endTime}` : `${e.time} – ${e.endTime}`;
+  if (!e.endTime) return clock(e.time!);
+  return multi ? `${clock(e.time!)} – ${day(e.endDate!)} ${clock(e.endTime)}` : `${clock(e.time!)} – ${clock(e.endTime)}`;
 }
 
 export const REMINDER_CHOICES = [0, 5, 10, 15, 30, 60, 120, 1440, 2880, 10080];

@@ -17,6 +17,18 @@ export const addDays = (d: Date, n: number) => {
 
 export const today = () => iso(new Date());
 
+/**
+ * "HH:MM" on a 12-hour clock: "09:30" → "9:30 AM", "13:00" → "1:00 PM".
+ * The short form fits small spaces like the month grid: "9:30am", "1pm".
+ */
+export const clock = (time: string, short = false) => {
+  const [h, m] = time.split(":").map(Number);
+  if (Number.isNaN(h)) return time;
+  const hour = h % 12 || 12, ampm = h < 12 ? "AM" : "PM";
+  if (short) return `${hour}${m ? `:${pad(m)}` : ""}${ampm.toLowerCase()}`;
+  return `${hour}:${pad(m || 0)} ${ampm}`;
+};
+
 /** Whole days from a to b (positive when b is later). */
 export const daysBetween = (a: string, b: string) => Math.round((parse(b).getTime() - parse(a).getTime()) / 86_400_000);
 

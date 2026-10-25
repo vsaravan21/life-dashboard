@@ -1,7 +1,7 @@
 import { Fragment, useState } from "react";
 import { EventEditor, type EditTarget } from "../components/EventEditor";
 import { Empty, Panel, Remove } from "../components/ui";
-import { addDays, daysBetween, fmt, iso, parse, today } from "../lib/dates";
+import { addDays, clock, daysBetween, fmt, iso, parse, today } from "../lib/dates";
 import type { GoogleEvent } from "../lib/google";
 import type { Entry } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
@@ -66,7 +66,7 @@ export function Calendar({ dash }: { dash: Dashboard }) {
                 <ul className="list">
                   {items.filter(e => e.date === day).map(e => (
                     <li key={e.key}>
-                      <span className="time">{e.time || "all day"}</span>
+                      <span className="time">{e.time ? clock(e.time) : "all day"}</span>
                       {e.source === "local" ? <>
                         <span className="grow1 t"><button className="linkish" onClick={() => setEditing({ kind: "local", entry: e.entry })}>{e.title}</button></span>
                         <Remove label={e.title} onClick={() => dash.remove(e.entry)} />
