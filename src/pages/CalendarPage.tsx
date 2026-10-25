@@ -109,7 +109,6 @@ export function CalendarPage({ dash }: { dash: Dashboard }) {
         <aside className="glass cal-side">
           <div className="label">{selected === t ? "Today" : fmt(selected, { weekday: "long" })}</div>
           <h2>{fmt(selected, { month: "long", day: "numeric", year: "numeric" })}</h2>
-          <button className="btn cal-add-btn" onClick={() => setEditing({ kind: "new", date: selected })}>+ Add an event on {fmt(selected, { month: "short", day: "numeric" })}</button>
           {dayItems.length === 0 ? <Empty>Nothing planned.</Empty> : (
             <ul className="list cal-items">
               {dayItems.map(it => (

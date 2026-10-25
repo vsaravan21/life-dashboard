@@ -307,7 +307,6 @@ a.cover-link:hover { text-decoration: underline; text-decoration-thickness: 1.5p
 .cal-side { padding: 20px 20px 22px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 @media (min-width: 1100px) { .cal-side { position: sticky; top: calc(24px + env(safe-area-inset-top, 0px)); } }
 .cal-side h2 { margin: -4px 0 4px; font-weight: 500; font-size: 20px; }
-.cal-add-btn { align-self: flex-start; }
 ul.cal-items { gap: 4px; }
 ul.cal-items li { padding: 0; border: 0; }
 .cal-item { width: 100%; display: flex; gap: 10px; align-items: stretch; text-align: left; border: 0; background: transparent; color: var(--ink);
