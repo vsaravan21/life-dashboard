@@ -1,4 +1,4 @@
-import { AddForm, Bar, Empty, ExampleTag, Panel, Remove, Stepper } from "../components/ui";
+import { AddForm, Bar, Empty, Panel, Remove, Stepper } from "../components/ui";
 import { daysBetween, fmt, today } from "../lib/dates";
 import type { Dashboard } from "../lib/useDashboard";
 
@@ -23,7 +23,7 @@ export function Goals({ dash }: { dash: Dashboard }) {
               <li key={g.id}>
                 <div className="grow1">
                   <div className="row-between">
-                    <span className="t">{g.data.title}<ExampleTag show={g.data.example} /></span>
+                    <span className="t">{g.data.title}</span>
                     {p >= 100 ? <span className="pill good">done</span>
                       : g.data.target ? <span className={"pill" + (past ? " warn" : "")}>{past ? "past target" : "by " + fmt(g.data.target, { month: "short", year: "numeric" })}</span>
                       : null}

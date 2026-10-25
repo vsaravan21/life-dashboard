@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AddForm, Bar, Empty, ExampleTag, Panel, Remove, Stepper } from "../components/ui";
+import { AddForm, Bar, Empty, Panel, Remove, Stepper } from "../components/ui";
 import { fmt, today } from "../lib/dates";
 import type { Entry } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
@@ -13,7 +13,7 @@ export function Reading({ dash }: { dash: Dashboard }) {
   const finishedThisYear = done.filter(b => (b.data.finished || "").startsWith(y)).length;
 
   const name = (b: Entry<"books">) => <>
-    <span className="t strong">{b.data.title}</span><ExampleTag show={b.data.example} />
+    <span className="t strong">{b.data.title}</span>
     {b.data.author && <div className="sub">{b.data.author}</div>}
   </>;
   const group = (label: string, items: ReactNode[]) => items.length > 0 && <>

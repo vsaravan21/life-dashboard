@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AddForm, DateField, Empty, ExampleTag, Panel, Remove } from "../components/ui";
+import { AddForm, DateField, Empty, Panel, Remove } from "../components/ui";
 import { fmt } from "../lib/dates";
 import { shrinkPhoto } from "../lib/image";
 import type { Entry } from "../lib/types";
@@ -50,7 +50,7 @@ export function Journal({ dash, notify }: { dash: Dashboard; notify: (m: string)
             <figure className="photo" key={j.id}>
               <Photo dash={dash} entry={j} />
               <figcaption className="cap">
-                <span className="t">{j.data.caption}<ExampleTag show={j.data.example} /></span>
+                <span className="t">{j.data.caption}</span>
                 <span className="meta">{fmt(j.data.date, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
               </figcaption>
               <Remove label={j.data.caption} onClick={() => dash.remove(j)} />

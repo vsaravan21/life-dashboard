@@ -1,4 +1,4 @@
-import { AddForm, Bar, DateField, Empty, ExampleTag, Panel, Remove, money } from "../components/ui";
+import { AddForm, Bar, DateField, Empty, Panel, Remove, money } from "../components/ui";
 import { fmt, parse, today } from "../lib/dates";
 import type { Dashboard } from "../lib/useDashboard";
 
@@ -53,7 +53,7 @@ export function Finance({ dash }: { dash: Dashboard }) {
           {recent.map(x => (
             <li key={x.id}>
               <span className="grow1">
-                <span className="t">{x.data.label}</span><ExampleTag show={x.data.example} />
+                <span className="t">{x.data.label}</span>
                 <div className="sub">{[fmt(x.data.date, { month: "short", day: "numeric" }), x.data.category].filter(Boolean).join(" · ")}</div>
               </span>
               <span className={"num " + (x.data.kind === "income" ? "amt-in" : "amt-out")}>

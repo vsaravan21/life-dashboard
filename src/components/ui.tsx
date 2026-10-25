@@ -11,8 +11,6 @@ export const money = (n: number, currency: string) => {
 
 export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-export const ExampleTag = ({ show }: { show?: boolean }) => (show ? <span className="ex">example</span> : null);
-
 export const Bar = ({ pct }: { pct: number }) => (
   <div className="track">
     <div className="fill" style={{ width: `${Math.max(0, Math.min(100, pct))}%` }} />

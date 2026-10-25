@@ -25,7 +25,7 @@ export interface DataByKind {
 export interface Entry<K extends Kind = Kind> {
   id: string;
   kind: K;
-  data: DataByKind[K] & { example?: boolean };
+  data: DataByKind[K];
   createdAt: string;
 }
 

@@ -69,22 +69,9 @@ function Summary({ dash }: { dash: Dashboard }) {
   );
 }
 
-function ExamplesNotice({ dash }: { dash: Dashboard }) {
-  const [armed, setArmed] = useState(false);
-  if (!dash.exampleCount) return null;
-  return (
-    <div className="notice">
-      <span>These are example entries so you can see how each section works. Add your own, then clear them.</span>
-      <button className={"btn sm" + (armed ? " primary" : "")} onClick={() => (armed ? dash.clearExamples() : setArmed(true))}>
-        {armed ? `Remove ${plural(dash.exampleCount, "example")}?` : "Clear examples"}
-      </button>
-    </div>
-  );
-}
-
-function DashboardView({ store, onSignOut, seedKey }: { store: Store; onSignOut?: () => void; seedKey?: string }) {
+function DashboardView({ store, onSignOut }: { store: Store; onSignOut?: () => void }) {
   const { msg, notify } = useToast();
-  const dash = useDashboard(store, notify, seedKey);
+  const dash = useDashboard(store, notify);
   return (
     <>
       <div className="glow" aria-hidden="true" />
@@ -96,7 +83,6 @@ function DashboardView({ store, onSignOut, seedKey }: { store: Store; onSignOut?
             <div className="notice">Entries are saved in this browser only. Turn on sign-in to sync across devices (see README).</div>
           )}
           {dash.error && <div className="notice">Couldn't load your data: {dash.error}</div>}
-          <ExamplesNotice dash={dash} />
           {dash.ready && (
             <div className="grid">
               <Calendar dash={dash} />
@@ -159,5 +145,5 @@ export default function App() {
   if (!supabase) return <DashboardView store={store!} />;
   if (session === undefined) return <div className="glow" aria-hidden="true" />;
   if (!session || !store) return <SignIn />;
-  return <DashboardView key={userId} store={store} seedKey={`life-dashboard:seeded:${userId}`} onSignOut={() => supabase!.auth.signOut()} />;
+  return <DashboardView key={userId} store={store} onSignOut={() => supabase!.auth.signOut()} />;
 }

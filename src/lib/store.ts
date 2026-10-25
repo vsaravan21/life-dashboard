@@ -1,5 +1,4 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { EXAMPLES } from "./examples";
 import type { DataByKind, Entry, Kind, Prefs } from "./types";
 
 /**
@@ -92,14 +91,15 @@ type DemoState = { entries: Entry[]; prefs: Prefs };
 function readDemo(): DemoState {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as DemoState;
+    if (raw) {
+      const state = JSON.parse(raw) as DemoState;
+      // Earlier versions started with sample entries flagged `example`; drop any that are left.
+      return { ...state, entries: state.entries.filter(e => !(e.data as { example?: boolean }).example) };
+    }
   } catch {
     /* storage blocked or corrupt: start fresh */
   }
-  return {
-    entries: EXAMPLES.map(([kind, data], i) => ({ id: `ex${i}`, kind, data: { ...data, example: true }, createdAt: new Date(Date.now() - (EXAMPLES.length - i) * 1000).toISOString() })) as Entry[],
-    prefs: DEFAULT_PREFS,
-  };
+  return { entries: [], prefs: DEFAULT_PREFS };
 }
 
 export function demoStore(): Store {

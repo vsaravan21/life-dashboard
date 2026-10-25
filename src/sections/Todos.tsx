@@ -1,4 +1,4 @@
-import { AddForm, Empty, ExampleTag, Panel, Remove } from "../components/ui";
+import { AddForm, Empty, Panel, Remove } from "../components/ui";
 import { fmt, today } from "../lib/dates";
 import type { Entry } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
@@ -15,7 +15,7 @@ export function Todos({ dash }: { dash: Dashboard }) {
       <li key={x.id} className={x.data.done ? "done" : ""}>
         <input type="checkbox" className="check" checked={x.data.done} aria-label={`Done: ${x.data.text}`}
           onChange={ev => dash.patch(x, { done: ev.target.checked, doneAt: ev.target.checked ? Date.now() : null })} />
-        <span className="grow1 t">{x.data.text}<ExampleTag show={x.data.example} /></span>
+        <span className="grow1 t">{x.data.text}</span>
         {x.data.due && !x.data.done && (
           <span className={"pill" + (late ? " warn" : "")}>{late ? "overdue" : x.data.due === t ? "today" : fmt(x.data.due, { month: "short", day: "numeric" })}</span>
         )}

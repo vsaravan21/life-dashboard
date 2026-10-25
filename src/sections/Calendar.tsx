@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { AddForm, DateField, Empty, ExampleTag, Panel, Remove } from "../components/ui";
+import { AddForm, DateField, Empty, Panel, Remove } from "../components/ui";
 import { addDays, daysBetween, fmt, iso, parse, today } from "../lib/dates";
 import type { GoogleEvent } from "../lib/google";
 import type { Entry } from "../lib/types";
@@ -61,7 +61,7 @@ export function Calendar({ dash }: { dash: Dashboard }) {
         })}
       </div>
       {items.length === 0 ? <Empty>Nothing on the calendar for the next two weeks.</Empty> : (
-        <div>
+        <div className="agenda" tabIndex={0} aria-label="Upcoming events">
           {days.map(day => {
             const dd = daysBetween(t, day);
             return (
@@ -72,7 +72,7 @@ export function Calendar({ dash }: { dash: Dashboard }) {
                     <li key={e.key}>
                       <span className="time">{e.time || "all day"}</span>
                       {e.source === "local" ? <>
-                        <span className="grow1 t">{e.title}<ExampleTag show={e.entry.data.example} /></span>
+                        <span className="grow1 t">{e.title}</span>
                         <Remove label={e.title} onClick={() => dash.remove(e.entry)} />
                       </> : <>
                         <span className="grow1 t">

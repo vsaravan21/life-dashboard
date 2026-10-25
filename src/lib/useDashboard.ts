@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { EXAMPLES } from "./examples";
 import type { Store } from "./store";
 import { KINDS, type DataByKind, type Entry, type EntriesByKind, type Kind, type Prefs } from "./types";
 
@@ -14,17 +13,15 @@ export interface Dashboard {
   error: string | null;
   entries: EntriesByKind;
   prefs: Prefs;
-  exampleCount: number;
   add<K extends Kind>(kind: K, data: DataByKind[K]): Promise<void>;
   patch<K extends Kind>(entry: Entry<K>, data: Partial<DataByKind[K]>): Promise<void>;
   remove(entry: Entry): Promise<void>;
-  clearExamples(): Promise<void>;
   setCurrency(currency: string): Promise<void>;
   store: Store;
 }
 
 /** Loads everything once, then applies changes optimistically and reconciles with the store. */
-export function useDashboard(store: Store, notify: (msg: string) => void, seedKey?: string): Dashboard {
+export function useDashboard(store: Store, notify: (msg: string) => void): Dashboard {
   const [list, setList] = useState<Entry[]>([]);
   const [prefs, setPrefs] = useState<Prefs>({ currency: "USD" });
   const [ready, setReady] = useState(false);
@@ -32,12 +29,7 @@ export function useDashboard(store: Store, notify: (msg: string) => void, seedKe
 
   const refresh = useCallback(async () => {
     try {
-      let { entries, prefs } = await store.load();
-      // First visit to a fresh cloud account: add the marked examples once.
-      if (store.mode === "cloud" && seedKey && entries.length === 0 && !localStorage.getItem(seedKey)) {
-        localStorage.setItem(seedKey, "1");
-        for (const [kind, data] of EXAMPLES) entries.push(await store.add(kind, { ...data, example: true } as never));
-      }
+      const { entries, prefs } = await store.load();
       setList(entries);
       setPrefs(prefs);
       setError(null);
@@ -46,7 +38,7 @@ export function useDashboard(store: Store, notify: (msg: string) => void, seedKe
     } finally {
       setReady(true);
     }
-  }, [store, seedKey]);
+  }, [store]);
 
   useEffect(() => {
     refresh();
@@ -78,22 +70,12 @@ export function useDashboard(store: Store, notify: (msg: string) => void, seedKe
     try { await store.remove(entry); } catch (e) { fail(e); }
   }, [store, fail]);
 
-  const clearExamples = useCallback(async () => {
-    const ex = list.filter(e => e.data.example);
-    setList(l => l.filter(e => !e.data.example));
-    try {
-      for (const e of ex) await store.remove(e);
-      notify("Examples cleared.");
-    } catch (e) { fail(e); }
-  }, [list, store, notify, fail]);
-
   const setCurrency = useCallback(async (currency: string) => {
     setPrefs(p => ({ ...p, currency }));
     try { await store.setPrefs({ ...prefs, currency }); } catch (e) { fail(e); }
   }, [store, prefs, fail]);
 
   const entries = useMemo(() => group(list), [list]);
-  const exampleCount = useMemo(() => list.filter(e => e.data.example).length, [list]);
 
-  return { ready, error, entries, prefs, exampleCount, add, patch, remove, clearExamples, setCurrency, store };
+  return { ready, error, entries, prefs, add, patch, remove, setCurrency, store };
 }

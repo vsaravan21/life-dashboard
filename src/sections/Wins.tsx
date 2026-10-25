@@ -1,4 +1,4 @@
-import { AddForm, DateField, Empty, ExampleTag, Panel, Remove } from "../components/ui";
+import { AddForm, DateField, Empty, Panel, Remove } from "../components/ui";
 import { fmt, today } from "../lib/dates";
 import type { Dashboard } from "../lib/useDashboard";
 
@@ -22,7 +22,7 @@ export function Wins({ dash }: { dash: Dashboard }) {
             <li key={w.id}>
               <span className="trophy" aria-hidden="true">★</span>
               <div className="grow1">
-                <span className="t">{w.data.title}</span><ExampleTag show={w.data.example} />
+                <span className="t">{w.data.title}</span>
                 <div className="sub">{fmt(w.data.date, { month: "short", day: "numeric", year: "numeric" })}{w.data.note ? ` · ${w.data.note}` : ""}</div>
               </div>
               <Remove label={w.data.title} onClick={() => dash.remove(w)} />

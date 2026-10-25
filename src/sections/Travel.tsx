@@ -1,4 +1,4 @@
-import { AddForm, DateField, Empty, ExampleTag, Panel, Remove, plural } from "../components/ui";
+import { AddForm, DateField, Empty, Panel, Remove, plural } from "../components/ui";
 import { daysBetween, fmt, today } from "../lib/dates";
 import type { Dashboard } from "../lib/useDashboard";
 
@@ -28,7 +28,7 @@ export function Travel({ dash, notify }: { dash: Dashboard; notify: (m: string) 
             return (
               <li key={x.id}>
                 <div className="grow1">
-                  <span className="t strong">{x.data.place}</span><ExampleTag show={x.data.example} />
+                  <span className="t strong">{x.data.place}</span>
                   <div className="sub">{`${short(x.data.start)} – ${short(x.data.end)} · ${plural(nights, "night")}`}{x.data.note ? ` · ${x.data.note}` : ""}</div>
                 </div>
                 <span className={"pill" + (d <= 0 ? " good" : "")}>{d <= 0 ? "now" : d === 1 ? "tomorrow" : `in ${d} days`}</span>
