@@ -16,7 +16,7 @@ export interface EventData {
 }
 export interface TodoData { text: string; due?: string; done: boolean; doneAt?: number | null; /** The to-do list it belongs to; none for loose tasks. */ listId?: string }
 /** A named, colored to-do list on the To-do page. `created` is a local day. */
-export interface ListData { title: string; color: string; created: string }
+export interface ListData { title: string; color: string; created: string; /** The one list shown on the home page. */ starred?: boolean }
 export interface MoneyData { label: string; amount: number; kind: "expense" | "income"; category?: string; date: string }
 export interface GoalData { title: string; target?: string; progress: number }
 export interface TripData { place: string; start: string; end: string; note?: string }

@@ -416,6 +416,8 @@ button.linkish:hover { color: var(--accent); }
 .tl-menu-btn { border: 0; background: var(--solid); color: var(--ink); width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none;
   box-shadow: 0 6px 14px -8px rgba(96,72,110,.45); }
 .tl-menu-btn:hover, .tl-menu-btn[aria-expanded="true"] { color: var(--accent); }
+.tl-star.on { color: var(--accent); }
+.star-mark { color: var(--accent); }
 .tl-menu { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; border-radius: 20px; background: var(--glass-edge); }
 .ev-colors .sw.paint { background: var(--paint); }
 .tl-tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }

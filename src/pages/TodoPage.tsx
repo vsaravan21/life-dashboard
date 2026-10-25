@@ -17,7 +17,7 @@ export const LIST_COLORS: Record<string, { name: string; cover: string }> = {
   petal: { name: "Petal", cover: "c-notes" },
 };
 const DEFAULT_COLOR = "peach";
-const colorOf = (c: string) => LIST_COLORS[c] ?? LIST_COLORS[DEFAULT_COLOR];
+export const colorOf = (c: string) => LIST_COLORS[c] ?? LIST_COLORS[DEFAULT_COLOR];
 
 function Swatches({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
@@ -58,6 +58,13 @@ function Task({ task, dash }: { task: Entry<"todos">; dash: Dashboard }) {
       <button className="tl-x" aria-label={`Remove ${task.data.text}`} title="Remove" onClick={() => dash.remove(task)}>×</button>
     </li>
   );
+}
+
+/** Star a list (and unstar the rest, since only one shows on the home page), or unstar it. */
+export function star(list: Entry<"lists">, dash: Dashboard) {
+  const on = !list.data.starred;
+  if (on) for (const l of dash.entries.lists) if (l.id !== list.id && l.data.starred) dash.patch(l, { starred: false });
+  dash.patch(list, { starred: on });
 }
 
 /** One list card: its tasks in the order they were added, then a "New task" line. */
@@ -101,6 +108,13 @@ function ListCard({ list, tasks, dash, focusNew }: { list: Entry<"lists"> | null
             : <h2 className="tl-title">Tasks</h2>}
           <span className="tl-date">{list ? `Created ${fmt(list.data.created, { month: "short", day: "numeric", year: "numeric" })}` : "Added from the home page"}</span>
         </div>
+        {list && (
+          <button className={"tl-menu-btn tl-star" + (list.data.starred ? " on" : "")} aria-pressed={!!list.data.starred}
+            aria-label={list.data.starred ? "Unstar: stop showing on the home page" : "Star: show on the home page"}
+            title={list.data.starred ? "Shown on the home page" : "Show on the home page"} onClick={() => star(list, dash)}>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill={list.data.starred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="m12 3.5 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8Z" /></svg>
+          </button>
+        )}
         {list && (
           <button className="tl-menu-btn" aria-label="List options" aria-expanded={menu} onClick={() => { setMenu(m => !m); setConfirm(false); }}>
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><circle cx="12" cy="5" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="12" cy="19" r="1.8" /></svg>
