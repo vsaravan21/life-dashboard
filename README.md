@@ -56,8 +56,10 @@ Any static host works. With [Vercel](https://vercel.com) or [Netlify](https://ne
 src/
   App.tsx            sign-in, layout, greeting and summary
   components/        Nav (sidebar) and shared UI pieces (Panel, AddForm, …)
-  sections/          one file per dashboard section
+  sections/          the home page's cards, one file per section
+  pages/             each section's own page (Calendar and Notes are built; the rest are placeholders)
   lib/
+    router.tsx       page addresses (/calendar, /notes, …) and in-app links
     store.ts         the data layer: Supabase store and the demo (browser) store
     useDashboard.ts  loads entries and applies changes
     types.ts         the shape of each section's entries

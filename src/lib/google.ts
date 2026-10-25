@@ -129,17 +129,15 @@ export interface ApiEvent {
 }
 interface ApiCalendar { id: string; summary: string; backgroundColor?: string; selected?: boolean; hidden?: boolean }
 
-/** Events from every calendar shown in the user's Google Calendar, from today through `days` days ahead. */
-export async function fetchEvents(days = 14): Promise<GoogleEvent[]> {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(end.getDate() + days);
+/** Events from every calendar shown in the user's Google Calendar, between two local days ("YYYY-MM-DD", end exclusive). */
+export async function fetchEvents(from: string, to: string): Promise<GoogleEvent[]> {
+  const [fy, fm, fd] = from.split("-").map(Number), [ty, tm, td] = to.split("-").map(Number);
+  const start = new Date(fy, fm - 1, fd), end = new Date(ty, tm - 1, td);
   const { items: cals } = await get<{ items: ApiCalendar[] }>("/users/me/calendarList", { minAccessRole: "reader" });
   const shown = cals.filter(c => c.selected !== false && !c.hidden);
   const lists = await Promise.all(shown.map(async c => {
     const { items } = await get<{ items: ApiEvent[] }>(`/calendars/${encodeURIComponent(c.id)}/events`, {
-      timeMin: start.toISOString(), timeMax: end.toISOString(), singleEvents: "true", orderBy: "startTime", maxResults: "250",
+      timeMin: start.toISOString(), timeMax: end.toISOString(), singleEvents: "true", orderBy: "startTime", maxResults: "1000",
     });
     return items.map(e => toGoogleEvent(e, c.summary, c.backgroundColor)).filter((e): e is GoogleEvent => !!e);
   }));

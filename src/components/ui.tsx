@@ -1,5 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { today } from "../lib/dates";
+import { Link, pageForPanel } from "../lib/router";
 
 export const money = (n: number, currency: string) => {
   try {
@@ -41,7 +42,7 @@ type Values = Record<string, string>;
  */
 export function AddForm({ children, onSave, onClose }: {
   children: ReactNode;
-  onSave: (values: Values, form: HTMLFormElement) => Promise<boolean | void> | boolean | void;
+  onSave: (values: Values, form: HTMLFormElement) => unknown;
   onClose: () => void;
 }) {
   const [busy, setBusy] = useState(false);
@@ -83,10 +84,12 @@ export function Panel({ id, title, cover, label, extra, addLabel, form, children
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const page = pageForPanel(id);
   return (
     <section className="panel glass" id={id}>
       <div className={`cover ${cover}`}>
-        <h2>{title}</h2>
+        <h2>{page ? <Link to={page.path} className="cover-link">{title}</Link> : title}</h2>
+        {page && <Link to={page.path} className="add-btn open-btn" aria-label={`Open ${title}`} title={`Open ${title}`}><Arrow /></Link>}
         <button className="add-btn" aria-label={addLabel} aria-expanded={open} onClick={() => setOpen(o => !o)}>+</button>
       </div>
       <div className="sec-meta"><span className="label">{label}</span>{extra}</div>
@@ -95,3 +98,7 @@ export function Panel({ id, title, cover, label, extra, addLabel, form, children
     </section>
   );
 }
+
+export const Arrow = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M9 7h8v8" /></svg>
+);

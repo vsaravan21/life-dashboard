@@ -4,7 +4,11 @@ import { Nav } from "./components/Nav";
 import { money, plural } from "./components/ui";
 import { daysBetween, dayOfYear, daysInYear, isoWeek, today } from "./lib/dates";
 import { cloudStore, demoStore, supabase, type Store } from "./lib/store";
+import { PAGES, useRoute } from "./lib/router";
 import { useDashboard, type Dashboard } from "./lib/useDashboard";
+import { CalendarPage } from "./pages/CalendarPage";
+import { NotesPage } from "./pages/NotesPage";
+import { EmptyPage } from "./pages/PageShell";
 import { Calendar } from "./sections/Calendar";
 import { Finance } from "./sections/Finance";
 import { Goals } from "./sections/Goals";
@@ -73,29 +77,44 @@ function Summary({ dash }: { dash: Dashboard }) {
 function DashboardView({ store, onSignOut }: { store: Store; onSignOut?: () => void }) {
   const { msg, notify } = useToast();
   const dash = useDashboard(store, notify);
+  const route = useRoute();
+  useEffect(() => {
+    const page = PAGES.find(p => p.path === route);
+    document.title = page ? `${page.label} · My Life` : "My Life";
+  }, [route]);
+
+  const home = (
+    <>
+      <div className="hero"><Greeting /><Summary dash={dash} /></div>
+      {store.mode === "demo" && (
+        <div className="notice">Entries are saved in this browser only. Turn on sign-in to sync across devices (see README).</div>
+      )}
+      <div className="grid">
+        <Calendar dash={dash} />
+        <Todos dash={dash} />
+        <Finance dash={dash} />
+        <Goals dash={dash} />
+        <Travel dash={dash} notify={notify} />
+        <Reading dash={dash} />
+        <Wins dash={dash} />
+        <Journal dash={dash} notify={notify} />
+        <Notes dash={dash} />
+      </div>
+    </>
+  );
+
   return (
     <>
       <div className="glow" aria-hidden="true" />
       <div className="wrap">
-        <Nav onSignOut={onSignOut} />
+        <Nav route={route} onSignOut={onSignOut} />
         <main id="top">
-          <div className="hero"><Greeting /><Summary dash={dash} /></div>
-          {store.mode === "demo" && (
-            <div className="notice">Entries are saved in this browser only. Turn on sign-in to sync across devices (see README).</div>
-          )}
           {dash.error && <div className="notice">Couldn't load your data: {dash.error}</div>}
           {dash.ready && (
-            <div className="grid">
-              <Calendar dash={dash} />
-              <Todos dash={dash} />
-              <Finance dash={dash} />
-              <Goals dash={dash} />
-              <Travel dash={dash} notify={notify} />
-              <Reading dash={dash} />
-              <Wins dash={dash} />
-              <Journal dash={dash} notify={notify} />
-              <Notes dash={dash} />
-            </div>
+            route === "/" ? home
+              : route === "/calendar" ? <CalendarPage dash={dash} />
+              : route === "/notes" ? <NotesPage dash={dash} />
+              : <EmptyPage path={route} />
           )}
         </main>
       </div>

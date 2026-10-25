@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Store } from "./store";
 import { KINDS, type DataByKind, type Entry, type EntriesByKind, type Kind, type Prefs } from "./types";
 
@@ -13,7 +13,7 @@ export interface Dashboard {
   error: string | null;
   entries: EntriesByKind;
   prefs: Prefs;
-  add<K extends Kind>(kind: K, data: DataByKind[K]): Promise<void>;
+  add<K extends Kind>(kind: K, data: DataByKind[K]): Promise<Entry<K> | undefined>;
   patch<K extends Kind>(entry: Entry<K>, data: Partial<DataByKind[K]>): Promise<void>;
   remove(entry: Entry): Promise<void>;
   setCurrency(currency: string): Promise<void>;
@@ -22,7 +22,13 @@ export interface Dashboard {
 
 /** Loads everything once, then applies changes optimistically and reconciles with the store. */
 export function useDashboard(store: Store, notify: (msg: string) => void): Dashboard {
-  const [list, setList] = useState<Entry[]>([]);
+  const [list, setListState] = useState<Entry[]>([]);
+  // Mirror of `list` so changes always build on the newest copy of an entry, even from stale closures.
+  const listRef = useRef<Entry[]>([]);
+  const setList = useCallback((next: Entry[] | ((l: Entry[]) => Entry[])) => {
+    listRef.current = typeof next === "function" ? next(listRef.current) : next;
+    setListState(listRef.current);
+  }, []);
   const [prefs, setPrefs] = useState<Prefs>({ currency: "USD" });
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,11 +62,13 @@ export function useDashboard(store: Store, notify: (msg: string) => void): Dashb
     try {
       const entry = await store.add(kind, data);
       setList(l => [...l, entry as Entry]);
-    } catch (e) { fail(e); }
+      return entry;
+    } catch (e) { fail(e); return undefined; }
   }, [store, fail]);
 
   const patch = useCallback(async <K extends Kind>(entry: Entry<K>, data: Partial<DataByKind[K]>) => {
-    const next = { ...entry, data: { ...entry.data, ...data } } as Entry;
+    const base = listRef.current.find(e => e.id === entry.id) ?? entry;
+    const next = { ...base, data: { ...base.data, ...data } } as Entry;
     setList(l => l.map(e => (e.id === entry.id ? next : e)));
     try { await store.save(next); } catch (e) { fail(e); }
   }, [store, fail]);

@@ -10,7 +10,7 @@ type Item =
   | { key: string; date: string; time: string; title: string; source: "local"; entry: Entry<"events"> }
   | { key: string; date: string; time: string; title: string; source: "google"; event: GoogleEvent };
 
-function GoogleControl({ g }: { g: GoogleCalendar }) {
+export function GoogleControl({ g }: { g: GoogleCalendar }) {
   if (g.status === "unavailable") return null;
   if (g.status === "on") return <button className="btn sm" onClick={g.disconnect} title="Stop showing Google Calendar events">Disconnect Google</button>;
   return (
@@ -21,8 +21,8 @@ function GoogleControl({ g }: { g: GoogleCalendar }) {
 }
 
 export function Calendar({ dash }: { dash: Dashboard }) {
-  const g = useGoogleCalendar();
   const t = today();
+  const g = useGoogleCalendar(t, iso(addDays(parse(t), 14)));
   const inRange = (d: string) => d >= t && daysBetween(t, d) <= 13;
 
   const items: Item[] = [

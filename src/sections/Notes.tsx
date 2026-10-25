@@ -5,7 +5,7 @@ import type { Dashboard } from "../lib/useDashboard";
 
 function NoteEditor({ initial, onSave, onClose }: {
   initial?: Pick<NoteData, "title" | "body">;
-  onSave: (title: string, body: string) => Promise<void> | void;
+  onSave: (title: string, body: string) => unknown;
   onClose: () => void;
 }) {
   const [busy, setBusy] = useState(false);
