@@ -93,7 +93,7 @@ function DashboardView({ store, onSignOut, seedKey }: { store: Store; onSignOut?
         <main id="top">
           <div className="hero"><Greeting /><Summary dash={dash} /></div>
           {store.mode === "demo" && (
-            <div className="notice">Demo mode: entries are saved in this browser only. Add Supabase keys to sync across devices (see README).</div>
+            <div className="notice">Entries are saved in this browser only. Turn on sign-in to sync across devices (see README).</div>
           )}
           {dash.error && <div className="notice">Couldn't load your data: {dash.error}</div>}
           <ExamplesNotice dash={dash} />

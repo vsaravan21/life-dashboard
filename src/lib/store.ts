@@ -27,7 +27,10 @@ const DEFAULT_PREFS: Prefs = { currency: "USD" };
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-export const supabase: SupabaseClient | null = url && anonKey ? createClient(url, anonKey) : null;
+/** Set VITE_SIGN_IN=off to skip sign-in and keep entries in the browser, even when keys are present. */
+const signInOn = import.meta.env.VITE_SIGN_IN !== "off";
+
+export const supabase: SupabaseClient | null = signInOn && url && anonKey ? createClient(url, anonKey) : null;
 
 type Row = { id: string; kind: Kind; data: Entry["data"]; created_at: string };
 const toEntry = (r: Row): Entry => ({ id: r.id, kind: r.kind, data: r.data, createdAt: r.created_at });

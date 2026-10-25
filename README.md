@@ -25,6 +25,8 @@ Without Supabase keys the app runs in **demo mode**: it fills itself with exampl
    ```
 5. Restart `npm run dev`. You'll be asked for your email and sent a sign-in link. On your first sign-in the dashboard adds a few entries marked "example". The **Clear examples** button removes them.
 
+**Sign-in is currently off on the live site** (`VITE_SIGN_IN=off` in `.env.production`), so entries are kept in each browser. Delete that line to turn Supabase sign-in and syncing back on.
+
 The anon key is meant to be public. Row-level security is what keeps your data private, so never put the `service_role` key in this app.
 
 ## Publish the website
