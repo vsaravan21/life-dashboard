@@ -41,7 +41,7 @@ function Greeting() {
   const h = now.getHours();
   return (
     <section className="glass greet-card">
-      <div className="orb lg" />
+      <img className="mascot lg" src="/mascot.svg" alt="" />
       <h1>{h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"} <b>{NAME}</b>, here's your day.</h1>
       <div className="date">
         {now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} · Week {isoWeek(now)} · day {dayOfYear(now)} of {daysInYear(now.getFullYear())}
@@ -138,7 +138,7 @@ function SignIn() {
       <div className="glow" aria-hidden="true" />
       <div className="signin-wrap">
         <form className="glass signin" onSubmit={submit}>
-          <div className="orb lg" />
+          <img className="mascot lg" src="/mascot.svg" alt="" />
           <h1>Welcome back</h1>
           {sent ? <p className="sub">Check {sent} for a sign-in link.</p> : <>
             <p className="sub">Enter your email and we'll send you a sign-in link.</p>

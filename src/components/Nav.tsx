@@ -17,7 +17,7 @@ const SECTIONS: { path: PagePath; label: string; icon: ReactNode }[] = [
 export function Nav({ route, onSignOut }: { route: PagePath; onSignOut?: () => void }) {
   return (
     <aside className="side glass">
-      <Link to="/" className="brand"><div className="orb" /><b>My Life</b></Link>
+      <Link to="/" className="brand"><img className="mascot" src="/mascot.svg" alt="" /><b>My Life</b></Link>
       <div className="label">Sections</div>
       <nav className="sections" aria-label="Sections">
         {SECTIONS.map(s => (

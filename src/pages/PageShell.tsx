@@ -28,7 +28,7 @@ export function EmptyPage({ path }: { path: PagePath }) {
   return (
     <PageShell path={path}>
       <section className="glass page-empty">
-        <div className="orb lg" />
+        <img className="mascot lg" src="/mascot.svg" alt="" />
         <h2>{page.label} gets its own page soon</h2>
         <p className="sub">This page is a blank canvas for now. Everything you've added still shows on the {page.label} card on the home page.</p>
         <Link to="/" className="btn primary">Back to home</Link>
