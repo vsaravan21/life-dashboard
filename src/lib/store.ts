@@ -1,0 +1,146 @@
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { EXAMPLES } from "./examples";
+import type { DataByKind, Entry, Kind, Prefs } from "./types";
+
+/**
+ * Where entries are kept. The app talks only to this interface, so the
+ * web site and a future native app share one data layer.
+ */
+export interface Store {
+  mode: "cloud" | "demo";
+  load(): Promise<{ entries: Entry[]; prefs: Prefs }>;
+  add<K extends Kind>(kind: K, data: DataByKind[K]): Promise<Entry<K>>;
+  /** Replace an entry's data with the given object. */
+  save(entry: Entry): Promise<void>;
+  remove(entry: Entry): Promise<void>;
+  setPrefs(prefs: Prefs): Promise<void>;
+  /** Store a photo and return the reference to keep in a journal entry. */
+  uploadPhoto(file: Blob): Promise<string>;
+  /** A displayable URL for a stored photo reference. */
+  photoUrl(ref: string): Promise<string | null>;
+}
+
+const DEFAULT_PREFS: Prefs = { currency: "USD" };
+
+/* ---------- Supabase ---------- */
+
+const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+
+export const supabase: SupabaseClient | null = url && anonKey ? createClient(url, anonKey) : null;
+
+type Row = { id: string; kind: Kind; data: Entry["data"]; created_at: string };
+const toEntry = (r: Row): Entry => ({ id: r.id, kind: r.kind, data: r.data, createdAt: r.created_at });
+
+export function cloudStore(client: SupabaseClient, userId: string): Store {
+  const urlCache = new Map<string, { url: string; expires: number }>();
+  return {
+    mode: "cloud",
+    async load() {
+      const [entries, prefs] = await Promise.all([
+        client.from("entries").select("id, kind, data, created_at").order("created_at"),
+        client.from("prefs").select("currency").maybeSingle(),
+      ]);
+      if (entries.error) throw entries.error;
+      return { entries: (entries.data as Row[]).map(toEntry), prefs: { ...DEFAULT_PREFS, ...(prefs.data ?? {}) } };
+    },
+    async add(kind, data) {
+      const { data: row, error } = await client.from("entries").insert({ kind, data }).select("id, kind, data, created_at").single();
+      if (error) throw error;
+      return toEntry(row as Row) as Entry<typeof kind>;
+    },
+    async save(entry) {
+      const { error } = await client.from("entries").update({ data: entry.data }).eq("id", entry.id);
+      if (error) throw error;
+    },
+    async remove(entry) {
+      const { error } = await client.from("entries").delete().eq("id", entry.id);
+      if (error) throw error;
+      const photo = entry.kind === "journal" ? (entry.data as DataByKind["journal"]).photo : undefined;
+      if (photo) await client.storage.from("journal").remove([photo]);
+    },
+    async setPrefs(prefs) {
+      const { error } = await client.from("prefs").upsert({ user_id: userId, ...prefs });
+      if (error) throw error;
+    },
+    async uploadPhoto(file) {
+      const path = `${userId}/${crypto.randomUUID()}.jpg`;
+      const { error } = await client.storage.from("journal").upload(path, file, { contentType: file.type || "image/jpeg" });
+      if (error) throw error;
+      return path;
+    },
+    async photoUrl(ref) {
+      const hit = urlCache.get(ref);
+      if (hit && hit.expires > Date.now()) return hit.url;
+      const { data, error } = await client.storage.from("journal").createSignedUrl(ref, 3600);
+      if (error || !data) return null;
+      urlCache.set(ref, { url: data.signedUrl, expires: Date.now() + 50 * 60_000 });
+      return data.signedUrl;
+    },
+  };
+}
+
+/* ---------- Demo (this browser only) ---------- */
+
+const KEY = "life-dashboard:v1";
+
+type DemoState = { entries: Entry[]; prefs: Prefs };
+
+function readDemo(): DemoState {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) return JSON.parse(raw) as DemoState;
+  } catch {
+    /* storage blocked or corrupt: start fresh */
+  }
+  return {
+    entries: EXAMPLES.map(([kind, data], i) => ({ id: `ex${i}`, kind, data: { ...data, example: true }, createdAt: new Date(Date.now() - (EXAMPLES.length - i) * 1000).toISOString() })) as Entry[],
+    prefs: DEFAULT_PREFS,
+  };
+}
+
+export function demoStore(): Store {
+  let state = readDemo();
+  const write = () => {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+    } catch {
+      throw new Error("This browser's storage is full. Remove some photos and try again.");
+    }
+  };
+  return {
+    mode: "demo",
+    async load() {
+      return structuredClone(state);
+    },
+    async add(kind, data) {
+      const entry = { id: crypto.randomUUID(), kind, data, createdAt: new Date().toISOString() } as Entry<typeof kind>;
+      state = { ...state, entries: [...state.entries, entry as Entry] };
+      write();
+      return entry;
+    },
+    async save(entry) {
+      state = { ...state, entries: state.entries.map(e => (e.id === entry.id ? entry : e)) };
+      write();
+    },
+    async remove(entry) {
+      state = { ...state, entries: state.entries.filter(e => e.id !== entry.id) };
+      write();
+    },
+    async setPrefs(prefs) {
+      state = { ...state, prefs };
+      write();
+    },
+    async uploadPhoto(file) {
+      return await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(file);
+      });
+    },
+    async photoUrl(ref) {
+      return ref;
+    },
+  };
+}
