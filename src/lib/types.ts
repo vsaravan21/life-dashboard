@@ -1,4 +1,4 @@
-export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "journal", "wins"] as const;
+export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "journal", "wins", "notes"] as const;
 export type Kind = (typeof KINDS)[number];
 
 /** Dates are local calendar days as "YYYY-MM-DD"; times are "HH:MM". */
@@ -10,6 +10,7 @@ export interface TripData { place: string; start: string; end: string; note?: st
 export interface BookData { title: string; author?: string; status: "reading" | "want" | "done"; progress: number; finished?: string }
 export interface JournalData { caption: string; date: string; photo?: string }
 export interface WinData { title: string; date: string; note?: string }
+export interface NoteData { title: string; body: string; pinned: boolean; updatedAt: number }
 
 export interface DataByKind {
   events: EventData;
@@ -20,6 +21,7 @@ export interface DataByKind {
   books: BookData;
   journal: JournalData;
   wins: WinData;
+  notes: NoteData;
 }
 
 export interface Entry<K extends Kind = Kind> {

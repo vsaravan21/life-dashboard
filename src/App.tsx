@@ -9,6 +9,7 @@ import { Calendar } from "./sections/Calendar";
 import { Finance } from "./sections/Finance";
 import { Goals } from "./sections/Goals";
 import { Journal } from "./sections/Journal";
+import { Notes } from "./sections/Notes";
 import { Reading } from "./sections/Reading";
 import { Todos } from "./sections/Todos";
 import { Travel } from "./sections/Travel";
@@ -93,6 +94,7 @@ function DashboardView({ store, onSignOut }: { store: Store; onSignOut?: () => v
               <Reading dash={dash} />
               <Wins dash={dash} />
               <Journal dash={dash} notify={notify} />
+              <Notes dash={dash} />
             </div>
           )}
         </main>
