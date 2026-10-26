@@ -59,7 +59,6 @@ export function GoalsPage({ dash, notify }: { dash: Dashboard; notify: (msg: str
   const [composing, setComposing] = useState(false);
   const [name, setName] = useState("");
   const [color, setColor] = useState(CAT_COLORS[0]);
-  const [confirmYear, setConfirmYear] = useState(false);
   const [fresh, setFresh] = useState<string | null>(null);
 
   const cats = dash.entries.goalcats.filter(c => c.data.year === year).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -78,13 +77,6 @@ export function GoalsPage({ dash, notify }: { dash: Dashboard; notify: (msg: str
     setName("");
     setColor(CAT_COLORS[(cats.length + 1) % CAT_COLORS.length]);
     setComposing(false);
-  };
-  const removeYear = () => {
-    if (!confirmYear) return setConfirmYear(true);
-    for (const c of cats) dash.remove(c);
-    for (const y of dash.entries.goalyears.filter(y => y.data.year === year)) dash.remove(y);
-    setConfirmYear(false);
-    setPicked(null);
   };
 
   const yearForm = (
@@ -111,7 +103,7 @@ export function GoalsPage({ dash, notify }: { dash: Dashboard; notify: (msg: str
         <section className="glass gl-years">
           <div className="seg" role="tablist" aria-label="Year">
             {years.map(y => (
-              <button key={y} role="tab" aria-selected={y === year} className={y === year ? "on" : ""} onClick={() => { setPicked(y); setConfirmYear(false); }}>{y}</button>
+              <button key={y} role="tab" aria-selected={y === year} className={y === year ? "on" : ""} onClick={() => setPicked(y)}>{y}</button>
             ))}
           </div>
           {addingYear ? yearForm : <button className="btn sm" onClick={() => setAddingYear(true)}>+ Add year</button>}
@@ -120,9 +112,6 @@ export function GoalsPage({ dash, notify }: { dash: Dashboard; notify: (msg: str
               <span><b>{done}</b> of {all.length} goals done in {year}</span>
               <div className="gl-bar" aria-hidden="true"><span style={{ width: `${(done / all.length) * 100}%` }} /></div>
             </>}
-            <button className={"btn sm" + (confirmYear ? " danger" : "")} onClick={removeYear} onBlur={() => setConfirmYear(false)}>
-              {confirmYear ? `Delete ${year}${cats.length ? ` and ${cats.length} categor${cats.length === 1 ? "y" : "ies"}` : ""}?` : `Delete ${year}`}
-            </button>
           </div>
         </section>
         <div className="tl-grid">
