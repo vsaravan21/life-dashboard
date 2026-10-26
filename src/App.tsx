@@ -22,7 +22,6 @@ import { Notes } from "./sections/Notes";
 import { Reading } from "./sections/Reading";
 import { Todos } from "./sections/Todos";
 import { Travel } from "./sections/Travel";
-import { Wins } from "./sections/Wins";
 
 const NAME = "Varsha";
 
@@ -61,7 +60,6 @@ function Summary({ dash }: { dash: Dashboard }) {
   const open = e.todos.filter(x => !x.data.done), late = open.filter(x => x.data.due && x.data.due < t).length;
   const next = e.trips.filter(x => x.data.end >= t).sort((a, b) => a.data.start.localeCompare(b.data.start))[0];
   const books = e.books.filter(b => b.data.status === "done" && (b.data.finished || "").startsWith(y)).length;
-  const wins = e.wins.filter(w => w.data.date.startsWith(y)).length;
   const d = next ? daysBetween(t, next.data.start) : 0;
   return (
     <section className="glass sum-card">
@@ -71,7 +69,6 @@ function Summary({ dash }: { dash: Dashboard }) {
         <span className={"chip" + (late ? " warn" : "")}><b>{open.length}</b> open tasks{late ? ` · ${late} overdue` : ""}</span>
         {next && <span className="chip">{d <= 0 ? <>In <b>{next.data.place}</b> now</> : <><b>{next.data.place}</b> in {plural(d, "day")}</>}</span>}
         <span className="chip"><b>{books}</b> {books === 1 ? "book" : "books"} in {y}</span>
-        <span className="chip"><b>{wins}</b> {wins === 1 ? "win" : "wins"} in {y}</span>
       </div>
     </section>
   );
@@ -95,7 +92,6 @@ function DashboardView({ store, onSignOut }: { store: Store; onSignOut?: () => v
         <LookingBack dash={dash} />
         <Travel dash={dash} notify={notify} />
         <Reading dash={dash} />
-        <Wins dash={dash} />
         <Journal dash={dash} notify={notify} />
         <Notes dash={dash} />
       </div>
