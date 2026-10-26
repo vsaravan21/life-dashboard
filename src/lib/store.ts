@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { deletePhoto, IDB_PREFIX, photoObjectUrl, savePhoto } from "./photoDb";
 import type { DataByKind, Entry, Kind, Prefs } from "./types";
 
 /**
@@ -17,9 +18,17 @@ export interface Store {
   uploadPhoto(file: Blob): Promise<string>;
   /** A displayable URL for a stored photo reference. */
   photoUrl(ref: string): Promise<string | null>;
+  /** Delete a stored photo (entries removed with `remove` take their photos with them). */
+  removePhoto(ref: string): Promise<void>;
 }
 
 const DEFAULT_PREFS: Prefs = { currency: "USD" };
+
+/** Every photo an entry holds: a journal moment's photo, or a trip's slides. */
+const photosOf = (entry: Entry): string[] =>
+  entry.kind === "journal" ? [(entry.data as DataByKind["journal"]).photo].filter((p): p is string => !!p)
+    : entry.kind === "trips" ? (entry.data as DataByKind["trips"]).photos ?? []
+    : [];
 
 /* ---------- Supabase ---------- */
 
@@ -58,8 +67,8 @@ export function cloudStore(client: SupabaseClient, userId: string): Store {
     async remove(entry) {
       const { error } = await client.from("entries").delete().eq("id", entry.id);
       if (error) throw error;
-      const photo = entry.kind === "journal" ? (entry.data as DataByKind["journal"]).photo : undefined;
-      if (photo) await client.storage.from("journal").remove([photo]);
+      const photos = photosOf(entry);
+      if (photos.length) await client.storage.from("journal").remove(photos);
     },
     async setPrefs(prefs) {
       const { error } = await client.from("prefs").upsert({ user_id: userId, ...prefs });
@@ -78,6 +87,9 @@ export function cloudStore(client: SupabaseClient, userId: string): Store {
       if (error || !data) return null;
       urlCache.set(ref, { url: data.signedUrl, expires: Date.now() + 50 * 60_000 });
       return data.signedUrl;
+    },
+    async removePhoto(ref) {
+      await client.storage.from("journal").remove([ref]);
     },
   };
 }
@@ -129,21 +141,22 @@ export function demoStore(): Store {
     async remove(entry) {
       state = { ...state, entries: state.entries.filter(e => e.id !== entry.id) };
       write();
+      for (const p of photosOf(entry)) if (p.startsWith(IDB_PREFIX)) await deletePhoto(p);
     },
     async setPrefs(prefs) {
       state = { ...state, prefs };
       write();
     },
     async uploadPhoto(file) {
-      return await new Promise<string>((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(String(r.result));
-        r.onerror = () => reject(r.error);
-        r.readAsDataURL(file);
-      });
+      try { return await savePhoto(file); }
+      catch { throw new Error("This browser couldn't save the photo. It may be out of space or in private mode."); }
     },
     async photoUrl(ref) {
-      return ref;
+      // Older journal photos were kept inline as data: URLs.
+      return ref.startsWith(IDB_PREFIX) ? photoObjectUrl(ref) : ref;
+    },
+    async removePhoto(ref) {
+      if (ref.startsWith(IDB_PREFIX)) await deletePhoto(ref);
     },
   };
 }

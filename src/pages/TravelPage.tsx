@@ -1,7 +1,7 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Outline } from "../components/Outline";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { plural } from "../components/ui";
 import { daysBetween, fmt, today } from "../lib/dates";
+import { shrinkPhoto } from "../lib/image";
 import type { Entry, TripData } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
 import { colorOf, Swatches } from "./TodoPage";
@@ -23,14 +23,102 @@ function when(t: TripData, now: string) {
   return d <= 0 ? { text: "now", cls: " good" } : { text: d === 1 ? "tomorrow" : `in ${d} days`, cls: "" };
 }
 
-/** One trip: its place and dates on a colored cover, then its journal. */
+function Slide({ dash, photo, alt }: { dash: Dashboard; photo: string; alt: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    dash.store.photoUrl(photo).then(u => live && setSrc(u));
+    return () => { live = false; };
+  }, [dash.store, photo]);
+  return <div className="tr-slide">{src ? <img src={src} alt={alt} loading="lazy" draggable={false} /> : <span className="sub">Loading…</span>}</div>;
+}
+
+/** A trip's photos as swipeable slides, with arrows, dots and a way to add more. */
+function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard; notify: (m: string) => void }) {
+  const photos = trip.data.photos ?? [];
+  const track = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLInputElement>(null);
+  const [at, setAt] = useState(0);
+  const [busy, setBusy] = useState(0);
+  const i = Math.min(at, Math.max(0, photos.length - 1));
+
+  const go = (n: number) => {
+    const el = track.current;
+    if (!el) return;
+    const to = (n + photos.length) % photos.length;
+    el.scrollTo({ left: to * el.clientWidth, behavior: "smooth" });
+  };
+  const onScroll = () => {
+    const el = track.current;
+    if (el && el.clientWidth) setAt(Math.round(el.scrollLeft / el.clientWidth));
+  };
+  const add = async (files: FileList | null) => {
+    const list = [...(files ?? [])].filter(f => f.type.startsWith("image/"));
+    if (!list.length) return;
+    setBusy(list.length);
+    const refs: string[] = [];
+    try {
+      for (const f of list) { refs.push(await dash.store.uploadPhoto(await shrinkPhoto(f))); setBusy(b => b - 1); }
+    } catch (e) {
+      notify(e instanceof Error ? e.message : "Couldn't add that photo.");
+    } finally {
+      setBusy(0);
+      if (input.current) input.current.value = "";
+    }
+    if (refs.length) {
+      const start = photos.length;
+      await dash.patch(trip, { photos: [...photos, ...refs] });
+      requestAnimationFrame(() => go(start));
+    }
+  };
+  const removeCurrent = async () => {
+    const ref = photos[i];
+    if (!ref) return;
+    await dash.patch(trip, { photos: photos.filter((_, n) => n !== i) });
+    dash.store.removePhoto(ref).catch(() => undefined);
+    // The next photo slides into this spot; at the end, the browser pulls back to the new last one.
+    setAt(Math.max(0, Math.min(i, photos.length - 2)));
+  };
+
+  const picker = <input ref={input} type="file" accept="image/*" multiple hidden aria-label={`Add photos to ${trip.data.place}`} onChange={e => add(e.target.files)} />;
+  if (!photos.length) return (
+    <button className="tr-empty" onClick={() => input.current?.click()} disabled={busy > 0}>
+      <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="3" /><circle cx="9" cy="10" r="1.6" /><path d="m4 17 5-4.5 4 3.5 3-2.5 4 3.5" /></svg>
+      <span>{busy ? `Adding ${busy} photo${busy === 1 ? "" : "s"}…` : "Add photos"}</span>
+      {picker}
+    </button>
+  );
+  return (
+    <div className="tr-slides" aria-roledescription="carousel" aria-label={`${trip.data.place} photos`}>
+      <div className="tr-track" ref={track} onScroll={onScroll}>
+        {photos.map((p, n) => <Slide key={p} dash={dash} photo={p} alt={`${trip.data.place}, photo ${n + 1} of ${photos.length}`} />)}
+      </div>
+      {photos.length > 1 && <>
+        <button className="tr-nav prev" aria-label="Previous photo" onClick={() => go(i - 1)}>‹</button>
+        <button className="tr-nav next" aria-label="Next photo" onClick={() => go(i + 1)}>›</button>
+      </>}
+      <div className="tr-bar">
+        <span className="tr-count">{i + 1} / {photos.length}</span>
+        {photos.length > 1 && photos.length <= 12 && (
+          <span className="tr-dots">{photos.map((p, n) => <button key={p} className={n === i ? "on" : ""} aria-label={`Photo ${n + 1}`} onClick={() => go(n)} />)}</span>
+        )}
+        <span className="tr-acts">
+          <button className="tr-act" onClick={() => input.current?.click()} disabled={busy > 0} aria-label="Add photos" title="Add photos">{busy ? "…" : "+"}</button>
+          <button className="tr-act" onClick={removeCurrent} aria-label="Remove this photo" title="Remove this photo">×</button>
+        </span>
+      </div>
+      {picker}
+    </div>
+  );
+}
+
+/** One trip: its place and dates on a colored cover, then its photo slides. */
 function TripCard({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard; notify: (m: string) => void }) {
   const [place, setPlace] = useState(trip.data.place);
   const [menu, setMenu] = useState(false);
   const [confirm, setConfirm] = useState(false);
   useEffect(() => setPlace(trip.data.place), [trip.data.place]);
   const color = trip.data.color || TRIP_COLORS[0];
-  const items = trip.data.items ?? [];
   const badge = when(trip.data, today());
 
   const savePlace = () => {
@@ -74,9 +162,7 @@ function TripCard({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboar
         </div>
       )}
       {trip.data.note && <p className="sub tr-note">{trip.data.note}</p>}
-      <div className="card-scroll">
-        <Outline items={items} onChange={next => dash.patch(trip, { items: next })} placeholder="Add a memory" label={`New memory from ${trip.data.place}`} />
-      </div>
+      <Slides trip={trip} dash={dash} notify={notify} />
     </section>
   );
 }
@@ -91,7 +177,7 @@ function TripJournal({ dash, notify, composing, setComposing }: { dash: Dashboar
     e.preventDefault();
     const v = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
     if (v.end < v.start) return notify("The return date is before the start date.");
-    await dash.add("trips", { place: v.place.trim() || "Untitled trip", start: v.start, end: v.end, color, items: [] });
+    await dash.add("trips", { place: v.place.trim() || "Untitled trip", start: v.start, end: v.end, color, photos: [] });
     setComposing(false);
     setColor(TRIP_COLORS[(trips.length + 1) % TRIP_COLORS.length]);
   };
@@ -124,7 +210,7 @@ function TripJournal({ dash, notify, composing, setComposing }: { dash: Dashboar
         <section className="glass page-empty tl-empty">
           <img className="mascot lg" src="/mascot.svg" alt="" />
           <h2>No trips yet</h2>
-          <p className="sub">Add a trip to give it a card, then write down the places, food and moments you want to remember.</p>
+          <p className="sub">Add a trip to give it a card, then fill it with photos you can swipe through.</p>
           <button className="btn primary" onClick={() => setComposing(true)}>+ New trip</button>
         </section>
       )}

@@ -29,8 +29,8 @@ export interface GoalCatData { year: number; title: string; color: string; items
 export interface LookbackData { year: number; month: number; sections: { id: string; title: string; items: OutlineItem[] }[] }
 export interface TripData {
   place: string; start: string; end: string; note?: string;
-  /** Card color on the Travel page, and the trip journal's lines. */
-  color?: string; items?: OutlineItem[];
+  /** Card color on the Travel page, and the trip's photo slides (store refs) in order. */
+  color?: string; photos?: string[];
 }
 /** A flight on the Travel page. `from` and `to` are airport codes or city names. */
 export interface FlightData { date: string; from: string; to: string; airline?: string; number?: string }
