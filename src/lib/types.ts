@@ -37,7 +37,11 @@ export interface TripData {
  * `from` and `to` are cities or airport codes; `note` marks a first or anything memorable.
  */
 export interface FlightData { date: string; from: string; to: string; reason?: string; note?: string; airline?: string; number?: string }
-export interface BookData { title: string; author?: string; status: "reading" | "want" | "done"; progress: number; finished?: string }
+/**
+ * `finished` is the day ("YYYY-MM-DD") or just the year ("YYYY") a book was finished.
+ * `cover` is an image URL or a stored photo ref; "none" means no cover was found to look up again.
+ */
+export interface BookData { title: string; author?: string; status: "reading" | "want" | "done"; progress: number; finished?: string; cover?: string; thoughts?: string }
 export interface JournalData { caption: string; date: string; photo?: string }
 export interface WinData { title: string; date: string; note?: string }
 export interface NoteData { title: string; body: string; pinned: boolean; updatedAt: number }

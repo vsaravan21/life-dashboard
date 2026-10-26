@@ -15,11 +15,13 @@ export function ImportButton({ dash, onDone }: { dash: Dashboard; onDone?: (msg:
       for (const c of plan.cats) await dash.add("goalcats", c);
       for (const m of plan.months) await dash.add("lookback", m);
       for (const f of plan.flights) await dash.add("flights", f);
+      for (const b of plan.books) await dash.add("books", b);
       const added = [
         plan.years.length && `${plan.years.length} ${plan.years.length === 1 ? "year" : "years"}`,
         plan.cats.length && `${plan.cats.length} ${plan.cats.length === 1 ? "category" : "categories"}`,
         plan.months.length && `${plan.months.length} ${plan.months.length === 1 ? "month" : "months"}`,
         plan.flights.length && `${plan.flights.length} ${plan.flights.length === 1 ? "flight" : "flights"}`,
+        plan.books.length && `${plan.books.length} ${plan.books.length === 1 ? "book" : "books"}`,
       ].filter(Boolean).join(", ");
       onDone?.(added ? `Imported ${added}.` : "Everything in that file is already here.");
     } catch (e) {

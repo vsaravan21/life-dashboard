@@ -24,10 +24,11 @@ export interface Store {
 
 const DEFAULT_PREFS: Prefs = { currency: "USD" };
 
-/** Every photo an entry holds: a journal moment's photo, or a trip's slides. */
+/** Every photo an entry holds: a journal moment's photo, a trip's slides, or a book cover you added. */
 const photosOf = (entry: Entry): string[] =>
   entry.kind === "journal" ? [(entry.data as DataByKind["journal"]).photo].filter((p): p is string => !!p)
     : entry.kind === "trips" ? (entry.data as DataByKind["trips"]).photos ?? []
+    : entry.kind === "books" ? [(entry.data as DataByKind["books"]).cover].filter((c): c is string => !!c && c !== "none" && !/^https?:/.test(c))
     : [];
 
 /* ---------- Supabase ---------- */

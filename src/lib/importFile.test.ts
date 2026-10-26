@@ -50,6 +50,16 @@ describe("planImport", () => {
     expect(plan.skipped).toBe(1);
   });
 
+  it("adds books by year, skipping titles already on the shelf", () => {
+    const have = { books: [entry("books", { title: "Atomic Habits", status: "done", progress: 100 })] } as never;
+    const plan = planImport(have, { books: [
+      { title: "atomic habits", author: "James Clear", year: 2025 },
+      { title: "Becoming", author: "Michelle Obama", year: 2026, thoughts: "Loved it" },
+    ] });
+    expect(plan.books).toEqual([{ title: "Becoming", author: "Michelle Obama", status: "done", progress: 100, finished: "2026", thoughts: "Loved it" }]);
+    expect(plan.skipped).toBe(1);
+  });
+
   it("rejects files that aren't goals files", () => {
     expect(() => planImport(none, { hello: 1 })).toThrow();
     expect(() => planImport(none, "nope")).toThrow();

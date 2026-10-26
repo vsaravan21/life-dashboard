@@ -8,16 +8,17 @@
  * }
  */
 import { newId } from "../components/Outline";
-import type { EntriesByKind, FlightData, GoalCatData, GoalYearData, LookbackData, OutlineItem } from "./types";
+import type { BookData, EntriesByKind, FlightData, GoalCatData, GoalYearData, LookbackData, OutlineItem } from "./types";
 
 interface FileItem { text?: unknown; depth?: unknown; done?: unknown }
 interface ImportFile {
   goals?: { year?: unknown; categories?: { title?: unknown; color?: unknown; items?: FileItem[] }[] }[];
   lookback?: { year?: unknown; month?: unknown; sections?: { title?: unknown; items?: FileItem[] }[]; summary?: unknown }[];
+  books?: { title?: unknown; author?: unknown; year?: unknown; status?: unknown; thoughts?: unknown }[];
   flights?: { date?: unknown; from?: unknown; to?: unknown; reason?: unknown; note?: unknown; airline?: unknown; number?: unknown }[];
 }
 
-export interface ImportPlan { years: GoalYearData[]; cats: GoalCatData[]; months: LookbackData[]; flights: FlightData[]; skipped: number }
+export interface ImportPlan { years: GoalYearData[]; cats: GoalCatData[]; months: LookbackData[]; flights: FlightData[]; books: BookData[]; skipped: number }
 
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 const year = (v: unknown) => (Number.isInteger(v) && (v as number) > 1900 && (v as number) < 3000 ? (v as number) : null);
@@ -30,12 +31,12 @@ const items = (list: FileItem[] | undefined, checks: boolean): OutlineItem[] =>
   });
 
 /** What to add from a file: only years, categories (by year and title) and months not already there. */
-export function planImport(have: Partial<Pick<EntriesByKind, "goalyears" | "goalcats" | "lookback" | "flights">>, raw: unknown): ImportPlan {
+export function planImport(have: Partial<Pick<EntriesByKind, "goalyears" | "goalcats" | "lookback" | "flights" | "books">>, raw: unknown): ImportPlan {
   if (!raw || typeof raw !== "object") throw new Error("That file isn't a goals file.");
   const file = raw as ImportFile;
-  if (!Array.isArray(file.goals) && !Array.isArray(file.lookback) && !Array.isArray(file.flights)) throw new Error("That file has no goals, months or flights in it.");
+  if (!Array.isArray(file.goals) && !Array.isArray(file.lookback) && !Array.isArray(file.flights) && !Array.isArray(file.books)) throw new Error("That file has no goals, months, flights or books in it.");
 
-  const plan: ImportPlan = { years: [], cats: [], months: [], flights: [], skipped: 0 };
+  const plan: ImportPlan = { years: [], cats: [], months: [], flights: [], books: [], skipped: 0 };
   const years = new Set((have.goalyears ?? []).map(y => y.data.year));
   const cats = new Set((have.goalcats ?? []).map(c => `${c.data.year}|${c.data.title.toLowerCase()}`));
   const months = new Set((have.lookback ?? []).map(m => `${m.data.year}-${m.data.month}`));
@@ -74,6 +75,19 @@ export function planImport(have: Partial<Pick<EntriesByKind, "goalyears" | "goal
     if (left > 0) { flown.set(key, left - 1); plan.skipped++; continue; }
     const extra = Object.fromEntries((["reason", "note", "airline", "number"] as const).map(k => [k, str(f[k])]).filter(([, v]) => v));
     plan.flights.push({ date, from, to, ...extra });
+  }
+  const shelf = new Set((have.books ?? []).map(b => b.data.title.toLowerCase()));
+  for (const b of file.books ?? []) {
+    const title = str(b?.title);
+    if (!title) continue;
+    if (shelf.has(title.toLowerCase())) { plan.skipped++; continue; }
+    shelf.add(title.toLowerCase());
+    const status = b.status === "reading" || b.status === "want" ? b.status : "done";
+    const y = year(b.year);
+    plan.books.push({
+      title, author: str(b.author), status, progress: status === "done" ? 100 : 0, finished: status === "done" && y ? String(y) : "",
+      ...(str(b.thoughts) ? { thoughts: str(b.thoughts) } : {}),
+    });
   }
   return plan;
 }

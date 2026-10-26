@@ -567,3 +567,39 @@ button.linkish:hover { color: var(--accent); }
 .tr-empty { aspect-ratio: 4 / 3; border-radius: 22px; border: 1.5px dashed var(--line); background: var(--glass-edge); color: var(--muted);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font: inherit; font-size: 14px; }
 .tr-empty:hover { color: var(--accent); border-color: var(--accent); }
+
+/* reading page: shelves of covers by year; hover a cover for your thoughts */
+.bk-shelf { padding: 18px 22px 22px; display: flex; flex-direction: column; gap: 14px; }
+.bk-shelf-title { margin: 0; font-weight: 500; font-size: 24px; letter-spacing: -.01em; display: flex; align-items: baseline; gap: 10px; }
+.bk-shelf-title .sub { font-size: 13px; font-weight: 400; }
+.bk-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 22px 18px; }
+.bk-tile { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bk-cover { position: relative; padding: 0; border: 0; background: none; aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; display: block; width: 100%;
+  box-shadow: 0 12px 24px -14px rgba(60,40,70,.55), 0 2px 6px -3px rgba(60,40,70,.3); transition: transform .2s, box-shadow .2s; cursor: pointer; }
+.bk-cover:hover, .bk-cover:focus-visible { transform: translateY(-3px); box-shadow: 0 18px 30px -14px rgba(60,40,70,.6), 0 2px 6px -3px rgba(60,40,70,.3); }
+.bk-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bk-plain { display: flex; flex-direction: column; justify-content: space-between; padding: 14px 12px; text-align: left; background: var(--paint); color: var(--ink); }
+.bk-plain-title { font-size: 14px; font-weight: 600; line-height: 1.25; text-wrap: balance; }
+.bk-plain-author { font-size: 11.5px; opacity: .75; }
+.bk-thoughts { position: absolute; inset: 0; padding: 14px 12px; display: flex; align-items: center; justify-content: center; text-align: left;
+  background: rgba(32,24,38,.78); color: #fff; font-size: 12.5px; line-height: 1.45; opacity: 0; transition: opacity .2s;
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.bk-thoughts.empty { text-align: center; font-weight: 500; background: rgba(32,24,38,.55); }
+.bk-thoughts-text { display: -webkit-box; -webkit-line-clamp: 11; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }
+.bk-cover:hover .bk-thoughts, .bk-cover:focus-visible .bk-thoughts { opacity: 1; }
+.bk-badge { position: absolute; top: 8px; right: 8px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 2px 8px; }
+.bk-title { font-size: 13.5px; font-weight: 500; line-height: 1.3; margin-top: 6px; }
+.bk-author { font-size: 12px; color: var(--muted); }
+.bk-year { width: 5.5em; font: inherit; font-size: 13px; color: var(--ink); text-align: center; }
+.bk-dlg-top { display: flex; gap: 18px; align-items: flex-start; }
+.bk-dlg-cover { width: 110px; flex: none; aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 22px -14px rgba(60,40,70,.6); }
+.bk-dlg-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.bk-dlg-fields .ev-title { width: 100%; }
+.bk-input { font: inherit; font-size: 14px; color: var(--ink); background: var(--solid); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; width: 100%; }
+.bk-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bk-row select.btn, .bk-row .btn { font: inherit; font-size: 13px; color: var(--ink); }
+.bk-prog { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.bk-prog input { accent-color: var(--accent); }
+.bk-notes { font: inherit; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--solid); border: 1px solid var(--line); border-radius: 18px; padding: 12px 14px; resize: vertical; min-height: 9em; }
+.bk-notes:focus-visible, .bk-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+@media (max-width: 560px) { .bk-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 18px 12px; } .bk-dlg-cover { width: 84px; } }

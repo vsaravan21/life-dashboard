@@ -13,6 +13,7 @@ import { FinancePage } from "./pages/FinancePage";
 import { GoalsPage } from "./pages/GoalsPage";
 import { LookingBackPage } from "./pages/LookingBackPage";
 import { TravelPage } from "./pages/TravelPage";
+import { ReadingPage } from "./pages/ReadingPage";
 import { EmptyPage } from "./pages/PageShell";
 import { Calendar } from "./sections/Calendar";
 import { Journal } from "./sections/Journal";
@@ -115,6 +116,7 @@ function DashboardView({ store, onSignOut }: { store: Store; onSignOut?: () => v
               : route === "/todo" ? <TodoPage dash={dash} />
               : route === "/finance" ? <FinancePage />
               : route === "/goals" ? <GoalsPage dash={dash} notify={notify} />
+              : route === "/reading" ? <ReadingPage dash={dash} notify={notify} />
               : route === "/travel" ? <TravelPage dash={dash} notify={notify} />
               : route === "/looking-back" ? <LookingBackPage dash={dash} notify={notify} />
               : <EmptyPage path={route} />

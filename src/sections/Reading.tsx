@@ -58,7 +58,7 @@ export function Reading({ dash }: { dash: Dashboard }) {
       {group("Recently finished", done.slice(0, 3).map(b => (
         <li key={b.id}>
           <div className="grow1">{name(b)}</div>
-          {b.data.finished && <span className="meta">{fmt(b.data.finished, { month: "short", day: "numeric" })}</span>}
+          {b.data.finished && b.data.finished.length === 10 && <span className="meta">{fmt(b.data.finished, { month: "short", day: "numeric" })}</span>}
           <Remove label={b.data.title} onClick={() => dash.remove(b)} />
         </li>
       )))}
