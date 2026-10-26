@@ -3,6 +3,7 @@ import { plural } from "../components/ui";
 import { daysBetween, fmt, today } from "../lib/dates";
 import { busiestYears, byYear, countryOf, flightWhen, isInternational, isUpcoming, yearStats } from "../lib/flights";
 import { shrinkPhoto } from "../lib/image";
+import { isVideoFile, isVideoRef, MAX_VIDEO_MB } from "../lib/media";
 import { ImportButton } from "../components/ImportButton";
 import type { Entry, TripData } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
@@ -39,23 +40,111 @@ function dotEdge(total: number, at: number, n: number) {
   return (n === w[0] && n > 0) || (n === w[w.length - 1] && n < total - 1);
 }
 
-function Slide({ dash, photo, alt }: { dash: Dashboard; photo: string; alt: string }) {
+/** A stored photo's or video's displayable URL, once it's ready. */
+function useMediaUrl(dash: Dashboard, ref: string) {
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
-    dash.store.photoUrl(photo).then(u => live && setSrc(u));
+    dash.store.photoUrl(ref).then(u => live && setSrc(u));
     return () => { live = false; };
-  }, [dash.store, photo]);
-  return <div className="tr-slide">{src ? <img src={src} alt={alt} loading="lazy" draggable={false} /> : <span className="sub">Loading…</span>}</div>;
+  }, [dash.store, ref]);
+  return src;
 }
 
-/** A trip's photos as swipeable slides, with arrows, dots and a way to add more. */
+function Slide({ dash, photo, alt }: { dash: Dashboard; photo: string; alt: string }) {
+  const src = useMediaUrl(dash, photo);
+  return (
+    <div className="tr-slide">
+      {!src ? <span className="sub">Loading…</span>
+        : isVideoRef(photo) ? <video src={src} controls playsInline preload="metadata" aria-label={alt} />
+        : <img src={src} alt={alt} loading="lazy" draggable={false} />}
+    </div>
+  );
+}
+
+function Thumb({ dash, photo }: { dash: Dashboard; photo: string }) {
+  const src = useMediaUrl(dash, photo);
+  if (!src) return null;
+  return isVideoRef(photo)
+    ? <><video src={`${src}#t=0.1`} muted playsInline preload="metadata" /><span className="tr-play" aria-hidden="true">▶</span></>
+    : <img src={src} alt="" draggable={false} />;
+}
+
+/** Thumbnails you drag (or move with the arrow keys) into a new order. */
+function Arrange({ photos, dash, onSave, onDone }: { photos: string[]; dash: Dashboard; onSave: (order: string[]) => void; onDone: () => void }) {
+  const [order, setOrder] = useState(photos);
+  const [drag, setDrag] = useState<string | null>(null);
+  const [focus, setFocus] = useState<string | null>(null);
+  const grid = useRef<HTMLOListElement>(null);
+  useEffect(() => setOrder(photos), [photos.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (focus) grid.current?.querySelector<HTMLElement>(`[data-ref="${CSS.escape(focus)}"]`)?.focus(); }, [order, focus]);
+
+  const moveTo = (ref: string, to: number) => setOrder(o => {
+    const a = o.filter(x => x !== ref);
+    a.splice(Math.max(0, Math.min(to, a.length)), 0, ref);
+    return a;
+  });
+  const commit = (next: string[]) => { if (next.join("|") !== photos.join("|")) onSave(next); };
+  const live = useRef(order);
+  live.current = order;
+  // Follow the pointer on the window, since reordering moves the thumbnail being dragged out from under it.
+  const startDrag = (ref: string) => {
+    setDrag(ref);
+    const move = (e: PointerEvent) => {
+      const over = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>(".tr-thumb")?.dataset.ref;
+      if (over && over !== ref) moveTo(ref, live.current.indexOf(over));
+    };
+    const end = (e: PointerEvent) => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+      setDrag(null);
+      if (e.type === "pointercancel") setOrder(photos);
+      else commit(live.current);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+  };
+
+  return (
+    <div className="tr-arrange">
+      <div className="tr-arrange-head">
+        <span className="sub">Drag to reorder</span>
+        <button className="btn sm primary" onClick={onDone}>Done</button>
+      </div>
+      <ol ref={grid} className="tr-thumbs" aria-label="Photo order">
+        {order.map((p, n) => (
+          <li key={p} data-ref={p} tabIndex={0} className={"tr-thumb" + (drag === p ? " dragging" : "")}
+            aria-label={`${isVideoRef(p) ? "Video" : "Photo"} ${n + 1} of ${order.length}. Use the left and right arrow keys to move it.`}
+            onPointerDown={e => { if (e.button === 0) startDrag(p); }}
+            onKeyDown={e => {
+              const d = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : 0;
+              if (!d) return;
+              e.preventDefault();
+              const next = order.filter(x => x !== p);
+              next.splice(Math.max(0, Math.min(n + d, next.length)), 0, p);
+              setOrder(next);
+              setFocus(p);
+              commit(next);
+            }}>
+            <Thumb dash={dash} photo={p} />
+            <span className="tr-thumb-n">{n + 1}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/** A trip's photos and videos as swipeable slides, with arrows, dots, a way to add more and a way to reorder. */
 function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard; notify: (m: string) => void }) {
   const photos = trip.data.photos ?? [];
   const track = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const [at, setAt] = useState(0);
   const [busy, setBusy] = useState(0);
+  const [arranging, setArranging] = useState(false);
   const i = Math.min(at, Math.max(0, photos.length - 1));
 
   const go = (n: number) => {
@@ -66,17 +155,24 @@ function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard;
   };
   const onScroll = () => {
     const el = track.current;
-    if (el && el.clientWidth) setAt(Math.round(el.scrollLeft / el.clientWidth));
+    if (!el || !el.clientWidth) return;
+    const now = Math.round(el.scrollLeft / el.clientWidth);
+    setAt(now);
+    // A video keeps playing only while it's the one on screen.
+    el.querySelectorAll("video").forEach(v => { if (v.closest(".tr-slide") !== el.children[now]) v.pause(); });
   };
   const add = async (files: FileList | null) => {
-    const list = [...(files ?? [])].filter(f => f.type.startsWith("image/"));
+    const all = [...(files ?? [])].filter(f => f.type.startsWith("image/") || isVideoFile(f));
+    const big = all.filter(f => isVideoFile(f) && f.size > MAX_VIDEO_MB * 1024 * 1024);
+    if (big.length) notify(`${big.length === 1 ? `"${big[0].name}" is` : `${big.length} videos are`} over ${MAX_VIDEO_MB} MB, so ${big.length === 1 ? "it was" : "they were"} skipped. Try a shorter clip.`);
+    const list = all.filter(f => !big.includes(f));
     if (!list.length) return;
     setBusy(list.length);
     const refs: string[] = [];
     try {
-      for (const f of list) { refs.push(await dash.store.uploadPhoto(await shrinkPhoto(f))); setBusy(b => b - 1); }
+      for (const f of list) { refs.push(await dash.store.uploadPhoto(isVideoFile(f) ? f : await shrinkPhoto(f))); setBusy(b => b - 1); }
     } catch (e) {
-      notify(e instanceof Error ? e.message : "Couldn't add that photo.");
+      notify(e instanceof Error ? e.message : "Couldn't add that file.");
     } finally {
       setBusy(0);
       if (input.current) input.current.value = "";
@@ -95,19 +191,25 @@ function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard;
     // The next photo slides into this spot; at the end, the browser pulls back to the new last one.
     setAt(Math.max(0, Math.min(i, photos.length - 2)));
   };
+  const reorder = (order: string[]) => {
+    const current = photos[i];
+    dash.patch(trip, { photos: order });
+    // Stay on the same photo wherever it moved to.
+    requestAnimationFrame(() => { const el = track.current; if (el) el.scrollTo({ left: order.indexOf(current) * el.clientWidth }); });
+  };
 
-  const picker = <input ref={input} type="file" accept="image/*" multiple hidden aria-label={`Add photos to ${trip.data.place}`} onChange={e => add(e.target.files)} />;
+  const picker = <input ref={input} type="file" accept="image/*,video/*" multiple hidden aria-label={`Add photos or videos to ${trip.data.place}`} onChange={e => add(e.target.files)} />;
   if (!photos.length) return (
     <button className="tr-empty" onClick={() => input.current?.click()} disabled={busy > 0}>
       <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="3" /><circle cx="9" cy="10" r="1.6" /><path d="m4 17 5-4.5 4 3.5 3-2.5 4 3.5" /></svg>
-      <span>{busy ? `Adding ${busy} photo${busy === 1 ? "" : "s"}…` : "Add photos"}</span>
+      <span>{busy ? `Adding ${busy} file${busy === 1 ? "" : "s"}…` : "Add photos or videos"}</span>
       {picker}
     </button>
   );
-  return (
+  return (<>
     <div className="tr-slides" aria-roledescription="carousel" aria-label={`${trip.data.place} photos`}>
       <div className="tr-track" ref={track} onScroll={onScroll}>
-        {photos.map((p, n) => <Slide key={p} dash={dash} photo={p} alt={`${trip.data.place}, photo ${n + 1} of ${photos.length}`} />)}
+        {photos.map((p, n) => <Slide key={p} dash={dash} photo={p} alt={`${trip.data.place}, ${isVideoRef(p) ? "video" : "photo"} ${n + 1} of ${photos.length}`} />)}
       </div>
       {photos.length > 1 && <>
         <button className="tr-nav prev" aria-label="Previous photo" onClick={() => go(i - 1)}>‹</button>
@@ -121,13 +223,19 @@ function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard;
           ))}</span>
         )}
         <span className="tr-acts">
-          <button className="tr-act" onClick={() => input.current?.click()} disabled={busy > 0} aria-label="Add photos" title="Add photos">{busy ? "…" : "+"}</button>
-          <button className="tr-act" onClick={removeCurrent} aria-label="Remove this photo" title="Remove this photo">×</button>
+          {photos.length > 1 && (
+            <button className={"tr-act" + (arranging ? " on" : "")} onClick={() => setArranging(a => !a)} aria-pressed={arranging} aria-label="Reorder photos" title="Reorder">
+              <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" /></svg>
+            </button>
+          )}
+          <button className="tr-act" onClick={() => input.current?.click()} disabled={busy > 0} aria-label="Add photos or videos" title="Add photos or videos">{busy ? "…" : "+"}</button>
+          <button className="tr-act" onClick={removeCurrent} aria-label="Remove this photo" title="Remove this one">×</button>
         </span>
       </div>
       {picker}
     </div>
-  );
+    {arranging && photos.length > 1 && <Arrange photos={photos} dash={dash} onSave={reorder} onDone={() => setArranging(false)} />}
+  </>);
 }
 
 /** One trip: its place and dates on a colored cover, then its photo slides. */
@@ -228,7 +336,7 @@ function TripJournal({ dash, notify, composing, setComposing }: { dash: Dashboar
         <section className="glass page-empty tl-empty">
           <img className="mascot lg" src="/mascot.svg" alt="" />
           <h2>No trips yet</h2>
-          <p className="sub">Add a trip to give it a card, then fill it with photos you can swipe through.</p>
+          <p className="sub">Add a trip to give it a card, then fill it with photos and videos you can swipe through.</p>
           <button className="btn primary" onClick={() => setComposing(true)}>+ New trip</button>
         </section>
       )}

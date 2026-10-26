@@ -2,6 +2,8 @@
  * Photos for the browser-only store. They live in IndexedDB rather than
  * localStorage, which holds only about 5 MB; refs look like "idb:<id>".
  */
+import { extFor } from "./media";
+
 const DB = "life-dashboard-photos", STORE = "photos";
 export const IDB_PREFIX = "idb:";
 
@@ -28,7 +30,8 @@ async function run<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRe
 const urls = new Map<string, string>();
 
 export async function savePhoto(blob: Blob) {
-  const id = crypto.randomUUID();
+  // The extension marks videos (see lib/media); older photos have none.
+  const id = `${crypto.randomUUID()}.${extFor(blob.type)}`;
   await run("readwrite", s => s.put(blob, id));
   return IDB_PREFIX + id;
 }

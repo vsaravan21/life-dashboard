@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { extFor } from "./media";
 import { deletePhoto, IDB_PREFIX, photoObjectUrl, savePhoto } from "./photoDb";
 import type { DataByKind, Entry, Kind, Prefs } from "./types";
 
@@ -14,7 +15,7 @@ export interface Store {
   save(entry: Entry): Promise<void>;
   remove(entry: Entry): Promise<void>;
   setPrefs(prefs: Prefs): Promise<void>;
-  /** Store a photo and return the reference to keep in a journal entry. */
+  /** Store a photo (or a trip video) and return the reference to keep in an entry. */
   uploadPhoto(file: Blob): Promise<string>;
   /** A displayable URL for a stored photo reference. */
   photoUrl(ref: string): Promise<string | null>;
@@ -76,7 +77,7 @@ export function cloudStore(client: SupabaseClient, userId: string): Store {
       if (error) throw error;
     },
     async uploadPhoto(file) {
-      const path = `${userId}/${crypto.randomUUID()}.jpg`;
+      const path = `${userId}/${crypto.randomUUID()}.${extFor(file.type)}`;
       const { error } = await client.storage.from("journal").upload(path, file, { contentType: file.type || "image/jpeg" });
       if (error) throw error;
       return path;
@@ -150,7 +151,7 @@ export function demoStore(): Store {
     },
     async uploadPhoto(file) {
       try { return await savePhoto(file); }
-      catch { throw new Error("This browser couldn't save the photo. It may be out of space or in private mode."); }
+      catch { throw new Error("This browser couldn't save that file. It may be out of space or in private mode."); }
     },
     async photoUrl(ref) {
       // Older journal photos were kept inline as data: URLs.
