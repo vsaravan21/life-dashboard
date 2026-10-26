@@ -560,9 +560,11 @@ button.linkish:hover { color: var(--accent); }
 .tr-nav:hover { background: rgba(255,255,255,.5); }
 .tr-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
 .tr-count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 3.5em; }
-.tr-dots { flex: 1; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.tr-dots { flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0; }
 .tr-dots button { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; background: var(--muted); opacity: .35; }
+.tr-dots button { flex: none; transition: width .2s, height .2s; }
 .tr-dots button.on { background: var(--accent); opacity: 1; width: 18px; border-radius: 999px; }
+.tr-dots button.edge { width: 4px; height: 4px; }
 .tr-acts { margin-left: auto; display: flex; gap: 6px; }
 .tr-act { width: 30px; height: 30px; border-radius: 50%; border: 0; background: var(--solid); color: var(--ink); font-size: 17px; line-height: 1; display: grid; place-items: center; }
 .tr-act:hover { color: var(--accent); }

@@ -25,6 +25,20 @@ function when(t: TripData, now: string) {
   return d <= 0 ? { text: "now", cls: " good" } : { text: d === 1 ? "tomorrow" : `in ${d} days`, cls: "" };
 }
 
+/** At most this many dots show; with more photos, the row slides along with the one you're on. */
+const MAX_DOTS = 7;
+/** The photo numbers whose dots show, keeping the current one near the middle. */
+function dotWindow(total: number, at: number) {
+  const size = Math.min(total, MAX_DOTS);
+  const start = Math.max(0, Math.min(at - Math.floor(size / 2), total - size));
+  return Array.from({ length: size }, (_, k) => start + k);
+}
+/** End dots shrink when more photos lie beyond them, a hint that the row keeps going. */
+function dotEdge(total: number, at: number, n: number) {
+  const w = dotWindow(total, at);
+  return (n === w[0] && n > 0) || (n === w[w.length - 1] && n < total - 1);
+}
+
 function Slide({ dash, photo, alt }: { dash: Dashboard; photo: string; alt: string }) {
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
@@ -101,8 +115,10 @@ function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard;
       </>}
       <div className="tr-bar">
         <span className="tr-count">{i + 1} / {photos.length}</span>
-        {photos.length > 1 && photos.length <= 12 && (
-          <span className="tr-dots">{photos.map((p, n) => <button key={p} className={n === i ? "on" : ""} aria-label={`Photo ${n + 1}`} onClick={() => go(n)} />)}</span>
+        {photos.length > 1 && (
+          <span className="tr-dots">{dotWindow(photos.length, i).map(n => (
+            <button key={photos[n]} className={(n === i ? "on" : "") + (dotEdge(photos.length, i, n) ? " edge" : "")} aria-label={`Photo ${n + 1}`} onClick={() => go(n)} />
+          ))}</span>
         )}
         <span className="tr-acts">
           <button className="tr-act" onClick={() => input.current?.click()} disabled={busy > 0} aria-label="Add photos" title="Add photos">{busy ? "…" : "+"}</button>
