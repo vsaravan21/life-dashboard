@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { Nav } from "./components/Nav";
-import { money, plural } from "./components/ui";
+import { plural } from "./components/ui";
 import { daysBetween, dayOfYear, daysInYear, isoWeek, today } from "./lib/dates";
 import { cloudStore, demoStore, supabase, type Store } from "./lib/store";
 import { PAGES, useRoute } from "./lib/router";
@@ -12,7 +12,6 @@ import { TodoPage } from "./pages/TodoPage";
 import { FinancePage } from "./pages/FinancePage";
 import { EmptyPage } from "./pages/PageShell";
 import { Calendar } from "./sections/Calendar";
-import { Finance } from "./sections/Finance";
 import { Goals } from "./sections/Goals";
 import { Journal } from "./sections/Journal";
 import { Notes } from "./sections/Notes";
@@ -56,7 +55,6 @@ function Summary({ dash }: { dash: Dashboard }) {
   const t = today(), y = t.slice(0, 4), e = dash.entries;
   const evToday = e.events.filter(x => x.data.date === t).length;
   const open = e.todos.filter(x => !x.data.done), late = open.filter(x => x.data.due && x.data.due < t).length;
-  const spent = e.money.filter(x => x.data.kind === "expense" && x.data.date.startsWith(t.slice(0, 7))).reduce((s, x) => s + (+x.data.amount || 0), 0);
   const next = e.trips.filter(x => x.data.end >= t).sort((a, b) => a.data.start.localeCompare(b.data.start))[0];
   const books = e.books.filter(b => b.data.status === "done" && (b.data.finished || "").startsWith(y)).length;
   const wins = e.wins.filter(w => w.data.date.startsWith(y)).length;
@@ -67,7 +65,6 @@ function Summary({ dash }: { dash: Dashboard }) {
       <div className="summary">
         <span className="chip accent"><b>{evToday}</b> {evToday === 1 ? "event" : "events"} today</span>
         <span className={"chip" + (late ? " warn" : "")}><b>{open.length}</b> open tasks{late ? ` · ${late} overdue` : ""}</span>
-        <span className="chip"><b>{money(spent, dash.prefs.currency)}</b> spent this month</span>
         {next && <span className="chip">{d <= 0 ? <>In <b>{next.data.place}</b> now</> : <><b>{next.data.place}</b> in {plural(d, "day")}</>}</span>}
         <span className="chip"><b>{books}</b> {books === 1 ? "book" : "books"} in {y}</span>
         <span className="chip"><b>{wins}</b> {wins === 1 ? "win" : "wins"} in {y}</span>
@@ -91,7 +88,6 @@ function DashboardView({ store, onSignOut }: { store: Store; onSignOut?: () => v
       <div className="grid">
         <Calendar dash={dash} />
         <Todos dash={dash} />
-        <Finance dash={dash} />
         <Goals dash={dash} />
         <Travel dash={dash} notify={notify} />
         <Reading dash={dash} />
