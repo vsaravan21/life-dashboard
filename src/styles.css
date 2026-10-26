@@ -512,3 +512,6 @@ button.linkish:hover { color: var(--accent); }
 .ol-row .tl-check, .ol-row .ol-dot { margin-top: 3px; }
 .ol-row[data-depth="1"] .tl-check, .ol-row[data-depth="2"] .tl-check { margin-top: 4px; }
 .ol-text { resize: none; overflow: hidden; line-height: 1.45; field-sizing: content; display: block; }
+/* long goal and month cards stop growing after about a dozen lines and scroll inside */
+.card-scroll { max-height: 480px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px;
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent; }

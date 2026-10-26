@@ -41,7 +41,9 @@ function CategoryCard({ cat, dash, fresh }: { cat: Entry<"goalcats">; dash: Dash
         </div>
       )}
       {total > 0 && <div className="gl-bar" aria-hidden="true"><span style={{ width: `${(done / total) * 100}%` }} /></div>}
-      <Outline checks items={cat.data.items} onChange={items => dash.patch(cat, { items })} placeholder="New goal" label={`New goal in ${cat.data.title}`} autoFocus={fresh} />
+      <div className="card-scroll">
+        <Outline checks items={cat.data.items} onChange={items => dash.patch(cat, { items })} placeholder="New goal" label={`New goal in ${cat.data.title}`} autoFocus={fresh} />
+      </div>
     </section>
   );
 }

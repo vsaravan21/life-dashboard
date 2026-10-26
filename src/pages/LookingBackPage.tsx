@@ -59,6 +59,7 @@ function MonthCard({ month, dash }: { month: Entry<"lookback">; dash: Dashboard 
           </button>
         </div>
       )}
+      <div className="card-scroll">
       {sections.map(s => (
         <div className="lb-group" key={s.id}>
           {(s.title || sections.length > 1) && (
@@ -73,6 +74,7 @@ function MonthCard({ month, dash }: { month: Entry<"lookback">; dash: Dashboard 
           <Outline items={s.items} onChange={items => update(s.id, { items })} placeholder="Add a highlight" label={`New highlight${s.title ? ` in ${s.title}` : ""}`} />
         </div>
       ))}
+      </div>
       <Reflection value={month.data.summary ?? ""} onSave={summary => dash.patch(month, { summary })} />
     </section>
   );
