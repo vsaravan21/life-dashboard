@@ -32,6 +32,19 @@ export async function sendSignInLink(email: string) {
   if (error) throw new Error(error.message);
 }
 
+export async function signInWithPassword(email: string, password: string) {
+  const { error } = await financeAuth!.auth.signInWithPassword({ email, password });
+  if (error) throw new Error(error.message === "Invalid login credentials"
+    ? "That email and password don't match. If you haven't set a password yet, use the email link once, then tap Set password."
+    : error.message);
+}
+
+/** Set or change the password for the signed-in Finance user. */
+export async function setFinancePassword(password: string) {
+  const { error } = await financeAuth!.auth.updateUser({ password });
+  if (error) throw new Error(error.message);
+}
+
 export const signOutOfFinance = () => financeAuth?.auth.signOut();
 
 export interface Account {

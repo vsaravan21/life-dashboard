@@ -446,6 +446,10 @@ button.linkish:hover { color: var(--accent); }
 .fin-signin { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; margin-top: 6px; }
 .fin-signin input { font: inherit; font-size: 14px; color: var(--ink); background: var(--solid); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; flex: 1 1 200px; min-width: 0; }
 .fin-signin .btn { padding: 8px 16px; font-size: 14px; }
+.fin-swap { font-size: 13px; color: var(--muted) !important; margin-top: 4px; }
+.fin-swap:hover { color: var(--accent) !important; }
+.fin-pw { padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; }
+.fin-pw .fin-signin { justify-content: flex-start; margin: 0; }
 .fin-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .fin-bar .meta { display: inline-flex; align-items: center; gap: 6px; }
 .fin-bar .grow1 { flex: 1; }

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { money } from "../components/ui";
 import { fmt } from "../lib/dates";
 import {
-  FinanceError, financeApi, financeAuth, isDebt, netWorth, openPlaid, sendSignInLink, signOutOfFinance, useFinanceSession,
+  FinanceError, financeApi, financeAuth, isDebt, netWorth, openPlaid, sendSignInLink, setFinancePassword, signInWithPassword,
+  signOutOfFinance, useFinanceSession,
   type Bank, type Transaction,
 } from "../lib/finance";
 import { PageShell } from "./PageShell";
@@ -20,16 +21,24 @@ const Lock = () => (
 );
 
 function SignInCard() {
+  const [mode, setMode] = useState<"password" | "link">("password");
   const [email, setEmail] = useState("");
-  const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
+  const [password, setPassword] = useState("");
+  const [state, setState] = useState<"idle" | "busy" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    setState("sending");
+    setState("busy");
     setError(null);
-    try { await sendSignInLink(email.trim()); setState("sent"); }
-    catch (err) { setError(err instanceof Error ? err.message : "Couldn't send the link."); setState("idle"); }
+    try {
+      if (mode === "password") { await signInWithPassword(email.trim(), password); setState("idle"); }
+      else { await sendSignInLink(email.trim()); setState("sent"); }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't sign in.");
+      setState("idle");
+    }
   };
+  const swap = () => { setMode(m => (m === "password" ? "link" : "password")); setError(null); setState("idle"); };
   return (
     <section className="glass fin-lock">
       <span className="fin-lock-icon"><Lock /></span>
@@ -41,12 +50,49 @@ function SignInCard() {
           <p className="sub">Sign in to see your accounts. The rest of the dashboard stays open as it is.</p>
           <form className="fin-signin" onSubmit={submit}>
             <input type="email" required autoComplete="email" placeholder="Your email" aria-label="Email" value={email} onChange={e => setEmail(e.target.value)} />
-            <button className="btn primary" disabled={state === "sending"}>{state === "sending" ? "Sending…" : "Email me a link"}</button>
+            {mode === "password" && (
+              <input type="password" required autoComplete="current-password" placeholder="Password" aria-label="Password" value={password} onChange={e => setPassword(e.target.value)} />
+            )}
+            <button className="btn primary" disabled={state === "busy"}>
+              {state === "busy" ? (mode === "password" ? "Signing in…" : "Sending…") : mode === "password" ? "Sign in" : "Email me a link"}
+            </button>
           </form>
         </>
       )}
       {error && <p className="err" role="alert">{error}</p>}
+      <button type="button" className="linkish fin-swap" onClick={swap}>
+        {mode === "password" ? "No password yet? Email me a sign-in link" : "Sign in with a password instead"}
+      </button>
     </section>
+  );
+}
+
+/** Set or change the Finance password while signed in. */
+function PasswordForm({ onDone }: { onDone: (msg: string) => void }) {
+  const [pw, setPw] = useState("");
+  const [again, setAgain] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (pw.length < 10) return setError("Use at least 10 characters.");
+    if (pw !== again) return setError("The two passwords don't match.");
+    setBusy(true);
+    try { await setFinancePassword(pw); onDone("Password saved. Next time, sign in with your email and this password."); }
+    catch (err) { setError(err instanceof Error ? err.message : "Couldn't save the password."); }
+    finally { setBusy(false); }
+  };
+  return (
+    <form className="glass fin-pw" onSubmit={submit}>
+      <span className="label">Finance password</span>
+      <div className="fin-signin">
+        <input type="password" autoComplete="new-password" placeholder="New password" aria-label="New password" value={pw} onChange={e => setPw(e.target.value)} />
+        <input type="password" autoComplete="new-password" placeholder="Type it again" aria-label="Repeat new password" value={again} onChange={e => setAgain(e.target.value)} />
+        <button className="btn primary" disabled={busy}>{busy ? "Saving…" : "Save password"}</button>
+        <button type="button" className="btn" onClick={() => onDone("")}>Cancel</button>
+      </div>
+      {error && <p className="err" role="alert">{error}</p>}
+    </form>
   );
 }
 
@@ -149,6 +195,8 @@ function Signedin({ email }: { email: string }) {
   const [notReady, setNotReady] = useState<string[]>([]);
   const [error, setError] = useState<FinanceError | Error | null>(null);
   const [connecting, setConnecting] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwNote, setPwNote] = useState("");
 
   const load = useCallback(async () => {
     setError(null);
@@ -182,8 +230,11 @@ function Signedin({ email }: { email: string }) {
         <span className="meta"><Lock /> Signed in as {email}</span>
         <span className="grow1" />
         <button className="btn sm" onClick={load}>Refresh</button>
+        <button className="btn sm" onClick={() => { setPwOpen(o => !o); setPwNote(""); }}>Set password</button>
         <button className="btn sm" onClick={() => signOutOfFinance()}>Lock Finance</button>
       </div>
+      {pwOpen && <PasswordForm onDone={msg => { setPwOpen(false); setPwNote(msg); }} />}
+      {pwNote && <div className="notice"><span>{pwNote}</span></div>}
       {error && (
         <div className="notice"><span className="err">{error.message}</span>
           {notAllowed && <button className="btn sm" onClick={() => signOutOfFinance()}>Use another email</button>}
