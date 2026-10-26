@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { plural } from "../components/ui";
 import { daysBetween, fmt, today } from "../lib/dates";
+import { busiestYears, byYear, countryOf, flightWhen, isInternational, isUpcoming, yearStats } from "../lib/flights";
 import { shrinkPhoto } from "../lib/image";
+import { ImportButton } from "../components/ImportButton";
 import type { Entry, TripData } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
 import { colorOf, Swatches } from "./TodoPage";
@@ -231,19 +233,44 @@ function TripJournal({ dash, notify, composing, setComposing }: { dash: Dashboar
 }
 
 const code = (s: string) => (/^[a-z]{3}$/i.test(s.trim()) ? s.trim().toUpperCase() : s.trim());
+const count = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`;
+
+function FlightRow({ f, dash, now }: { f: Entry<"flights">; dash: Dashboard; now: string }) {
+  const d = f.data, abroad = isInternational(d);
+  return (
+    <li className="fl-row">
+      <div className="fl-main">
+        <span className="fl-route"><b>{d.from}</b><span className="fl-arrow" aria-hidden="true">→</span><b>{d.to}</b></span>
+        {(d.reason || d.airline || d.number) && <span className="fl-meta">{[d.reason, [d.airline, d.number].filter(Boolean).join(" ")].filter(Boolean).join(" · ")}</span>}
+        {(d.note || abroad || isUpcoming(d, now)) && (
+          <span className="fl-tags">
+            {isUpcoming(d, now) && <span className="pill">booked</span>}
+            {abroad && <span className="pill fl-intl">international</span>}
+            {d.note && <span className="pill fl-note">✦ {d.note}</span>}
+          </span>
+        )}
+      </div>
+      <span className="fl-date sub">{flightWhen(d.date)}</span>
+      <button className="tl-x" aria-label={`Remove ${d.from} to ${d.to}`} title="Remove" onClick={() => dash.remove(f)}>×</button>
+    </li>
+  );
+}
 
 function Flights({ dash, composing, setComposing }: { dash: Dashboard; composing: boolean; setComposing: (v: boolean) => void }) {
   const t = today();
-  const flights = [...dash.entries.flights].sort((a, b) => b.data.date.localeCompare(a.data.date) || b.createdAt.localeCompare(a.createdAt));
-  const years = [...new Set(flights.map(f => f.data.date.slice(0, 4)))];
-  const airports = new Set(flights.flatMap(f => [f.data.from, f.data.to]));
-  const airlines = new Set(flights.map(f => f.data.airline).filter(Boolean));
+  const groups = byYear(dash.entries.flights);
+  const all = dash.entries.flights.map(f => f.data);
+  const places = new Set(all.flatMap(f => [f.from, f.to]));
+  const countries = new Set([...places].map(countryOf));
+  const busiest = busiestYears(groups);
+  const first = groups[groups.length - 1]?.year;
 
   const add = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const v = Object.fromEntries(new FormData(form)) as Record<string, string>;
-    await dash.add("flights", { date: v.date, from: code(v.from), to: code(v.to), airline: v.airline.trim(), number: v.number.trim().toUpperCase() });
+    const extra = Object.fromEntries(Object.entries({ reason: v.reason.trim(), note: v.note.trim() }).filter(([, x]) => x));
+    await dash.add("flights", { date: v.date, from: code(v.from), to: code(v.to), ...extra });
     form.reset();
     (form.elements.namedItem("from") as HTMLInputElement).focus();
   };
@@ -251,47 +278,48 @@ function Flights({ dash, composing, setComposing }: { dash: Dashboard; composing
   return (<>
     {composing && (
       <form className="glass fl-form" onSubmit={add}>
-        <input className="btn" type="date" name="date" defaultValue={t} required aria-label="Date" />
-        <input className="btn fl-code" name="from" placeholder="From (SFO)" required aria-label="From" />
+        <input className="btn" type="month" name="date" defaultValue={t.slice(0, 7)} required aria-label="Month" />
+        <input className="btn fl-code" name="from" placeholder="From" required aria-label="From" />
         <span className="fl-arrow" aria-hidden="true">→</span>
-        <input className="btn fl-code" name="to" placeholder="To (SEA)" required aria-label="To" />
-        <input className="btn" name="airline" placeholder="Airline" aria-label="Airline" />
-        <input className="btn fl-num" name="number" placeholder="Flight no." aria-label="Flight number" />
+        <input className="btn fl-code" name="to" placeholder="To" required aria-label="To" />
+        <input className="btn fl-wide" name="reason" placeholder="Why? (Back to school…)" aria-label="Reason" />
+        <input className="btn fl-wide" name="note" placeholder="A first? (First solo flight…)" aria-label="Note" />
         <button className="btn primary">Add flight</button>
         <button type="button" className="btn" onClick={() => setComposing(false)}>Done</button>
       </form>
     )}
-    {flights.length === 0 ? (!composing && (
+    {groups.length === 0 ? (!composing && (
       <section className="glass page-empty">
         <img className="mascot lg" src="/mascot.svg" alt="" />
         <h2>No flights yet</h2>
-        <p className="sub">Log each flight you take to see where you've been, how many airports you've touched and who you fly with most.</p>
+        <p className="sub">Log each flight to see your years in the air: how many flights, which cities and countries, and your firsts. Or import a flights file.</p>
         <button className="btn primary" onClick={() => setComposing(true)}>+ Add flight</button>
       </section>
     )) : (<>
       <section className="glass sum-card">
         <div className="summary">
-          <span className="chip accent"><b>{flights.length}</b> {flights.length === 1 ? "flight" : "flights"}</span>
-          <span className="chip"><b>{airports.size}</b> {airports.size === 1 ? "airport" : "airports"}</span>
-          {airlines.size > 0 && <span className="chip"><b>{airlines.size}</b> {airlines.size === 1 ? "airline" : "airlines"}</span>}
-          <span className="chip"><b>{flights.filter(f => f.data.date.startsWith(t.slice(0, 4))).length}</b> in {t.slice(0, 4)}</span>
+          <span className="chip accent"><b>{all.length}</b> {all.length === 1 ? "flight" : "flights"} since {first}</span>
+          <span className="chip"><b>{places.size}</b> {places.size === 1 ? "city" : "cities"}</span>
+          <span className="chip"><b>{countries.size}</b> {countries.size === 1 ? "country" : "countries"}</span>
+          {groups.length > 1 && <span className="chip">Busiest {busiest.years.length > 1 ? "years" : "year"} <b>{[...busiest.years].reverse().join(" & ")}</b> · {busiest.flights} flights</span>}
         </div>
       </section>
-      {years.map(y => {
-        const list = flights.filter(f => f.data.date.startsWith(y));
+      {groups.map(g => {
+        const s = yearStats(g.year, g.flights.map(f => f.data), t);
         return (
-          <section key={y} className="lb-year" aria-label={y}>
-            <h2 className="lb-year-title">{y} <span className="sub">{plural(list.length, "flight")}</span></h2>
-            <ul className="glass fl-list">
-              {list.map(f => (
-                <li key={f.id} className="fl-row">
-                  <span className="fl-route"><b>{f.data.from}</b><span className="fl-arrow" aria-hidden="true">→</span><b>{f.data.to}</b></span>
-                  <span className="fl-meta">{[f.data.airline, f.data.number].filter(Boolean).join(" ")}</span>
-                  <span className="fl-date sub">{fmt(f.data.date, { weekday: "short", month: "short", day: "numeric" })}</span>
-                  <button className="tl-x" aria-label={`Remove ${f.data.from} to ${f.data.to}`} title="Remove" onClick={() => dash.remove(f)}>×</button>
-                </li>
-              ))}
-            </ul>
+          <section key={g.year} className="glass fl-year" aria-label={g.year}>
+            <header className="fl-year-head">
+              <div>
+                <h2 className="fl-year-title">{g.year}</h2>
+                <p className="fl-headline"><b>{count(s.flights, "flight")}</b> in {g.year}{s.upcoming ? ` · ${s.flown} flown, ${s.upcoming} booked` : ""}</p>
+              </div>
+              <div className="summary fl-stats">
+                <span className="chip"><b>{s.cities}</b> {s.cities === 1 ? "city" : "cities"}</span>
+                {s.international > 0 && <span className="chip"><b>{s.international}</b> international</span>}
+                {s.countries.length > 0 && <span className="chip">{s.countries.join(", ")}</span>}
+              </div>
+            </header>
+            <div className="card-scroll"><ul className="fl-list">{g.flights.map(f => <FlightRow key={f.id} f={f} dash={dash} now={t} />)}</ul></div>
           </section>
         );
       })}
@@ -312,9 +340,10 @@ export function TravelPage({ dash, notify }: { dash: Dashboard; notify: (m: stri
   };
 
   return (
-    <PageShell path="/travel" actions={
+    <PageShell path="/travel" actions={<>
+      {tab === "flights" && <ImportButton dash={dash} onDone={notify} />}
       <button className="btn primary" onClick={() => setComposing(true)}>{tab === "journal" ? "+ New trip" : "+ Add flight"}</button>
-    }>
+    </>}>
       <div className="seg tr-tabs" role="tablist" aria-label="Travel">
         <button role="tab" aria-selected={tab === "journal"} className={tab === "journal" ? "on" : ""} onClick={() => setTab("journal")}>Trip journal</button>
         <button role="tab" aria-selected={tab === "flights"} className={tab === "flights" ? "on" : ""} onClick={() => setTab("flights")}>Flights I've Taken</button>

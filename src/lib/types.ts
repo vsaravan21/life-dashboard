@@ -32,8 +32,11 @@ export interface TripData {
   /** Card color on the Travel page, and the trip's photo slides (store refs) in order. */
   color?: string; photos?: string[];
 }
-/** A flight on the Travel page. `from` and `to` are airport codes or city names. */
-export interface FlightData { date: string; from: string; to: string; airline?: string; number?: string }
+/**
+ * A flight on the Travel page. `date` is "YYYY-MM-DD", or "YYYY-MM" when only the month is known.
+ * `from` and `to` are cities or airport codes; `note` marks a first or anything memorable.
+ */
+export interface FlightData { date: string; from: string; to: string; reason?: string; note?: string; airline?: string; number?: string }
 export interface BookData { title: string; author?: string; status: "reading" | "want" | "done"; progress: number; finished?: string }
 export interface JournalData { caption: string; date: string; photo?: string }
 export interface WinData { title: string; date: string; note?: string }

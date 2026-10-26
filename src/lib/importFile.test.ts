@@ -35,6 +35,21 @@ describe("planImport", () => {
     expect(plan.skipped).toBe(2);
   });
 
+  it("adds flights, skipping ones already logged but keeping repeats of a route", () => {
+    const have = { flights: [entry("flights", { date: "2026-06", from: "Seattle", to: "Los Angeles" })] } as never;
+    const plan = planImport(have, { flights: [
+      { date: "2026-06", from: "Seattle", to: "Los Angeles" },
+      { date: "2026-06", from: "Seattle", to: "Los Angeles", reason: "Again" },
+      { date: "2022-12", from: "San Francisco", to: "New York City", note: "First Solo Flight", reason: "" },
+      { date: "Dec 2022", from: "x", to: "y" },
+    ] });
+    expect(plan.flights).toEqual([
+      { date: "2026-06", from: "Seattle", to: "Los Angeles", reason: "Again" },
+      { date: "2022-12", from: "San Francisco", to: "New York City", note: "First Solo Flight" },
+    ]);
+    expect(plan.skipped).toBe(1);
+  });
+
   it("rejects files that aren't goals files", () => {
     expect(() => planImport(none, { hello: 1 })).toThrow();
     expect(() => planImport(none, "nope")).toThrow();
