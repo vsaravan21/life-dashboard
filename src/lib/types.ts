@@ -1,4 +1,4 @@
-export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "journal", "wins", "notes", "lists", "goalyears", "goalcats", "lookback"] as const;
+export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "journal", "wins", "notes", "lists", "goalyears", "goalcats", "lookback", "flights"] as const;
 export type Kind = (typeof KINDS)[number];
 
 /** Dates are local calendar days as "YYYY-MM-DD"; times are "HH:MM". */
@@ -27,7 +27,13 @@ export interface GoalYearData { year: number }
 export interface GoalCatData { year: number; title: string; color: string; items: OutlineItem[] }
 /** One month on the Looking Back page: titled sections of items. */
 export interface LookbackData { year: number; month: number; sections: { id: string; title: string; items: OutlineItem[] }[] }
-export interface TripData { place: string; start: string; end: string; note?: string }
+export interface TripData {
+  place: string; start: string; end: string; note?: string;
+  /** Card color on the Travel page, and the trip journal's lines. */
+  color?: string; items?: OutlineItem[];
+}
+/** A flight on the Travel page. `from` and `to` are airport codes or city names. */
+export interface FlightData { date: string; from: string; to: string; airline?: string; number?: string }
 export interface BookData { title: string; author?: string; status: "reading" | "want" | "done"; progress: number; finished?: string }
 export interface JournalData { caption: string; date: string; photo?: string }
 export interface WinData { title: string; date: string; note?: string }
@@ -47,6 +53,7 @@ export interface DataByKind {
   goalyears: GoalYearData;
   goalcats: GoalCatData;
   lookback: LookbackData;
+  flights: FlightData;
 }
 
 export interface Entry<K extends Kind = Kind> {

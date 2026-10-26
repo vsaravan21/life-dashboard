@@ -512,3 +512,30 @@ button.linkish:hover { color: var(--accent); }
 .card-scroll { max-height: 480px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px;
   scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .home-scroll { max-height: 340px; }
+
+/* travel page: a trip journal of cards, and a log of flights */
+.tr-tabs { padding: 5px; }
+.tr-tabs button { padding: 7px 16px; font-size: 14px; }
+.tr-dates { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tr-dates input.btn { font: inherit; font-size: 13px; color: var(--ink); }
+.tr-note { margin: 0; font-size: 13px; }
+.tl-head .pill { align-self: center; flex: none; }
+.fl-form { padding: 12px 14px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.fl-form input.btn { font: inherit; font-size: 13.5px; color: var(--ink); padding: 8px 14px; min-width: 0; }
+.fl-form .fl-code { width: 9em; }
+.fl-form .fl-num { width: 7.5em; }
+.fl-list { list-style: none; margin: 0; padding: 6px 18px; display: flex; flex-direction: column; }
+.fl-row { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto 24px; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.fl-row:last-child { border-bottom: 0; }
+.fl-row:hover .tl-x, .fl-row .tl-x:focus-visible { opacity: .8; }
+.fl-route { display: flex; align-items: center; gap: 10px; font-size: 17px; min-width: 0; }
+.fl-route b { font-weight: 600; letter-spacing: .02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fl-arrow { color: var(--accent); }
+.fl-meta { font-size: 13.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fl-date { font-size: 13px; white-space: nowrap; }
+@media (max-width: 560px) {
+  .fl-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; }
+  .fl-meta { grid-column: 1; grid-row: 2; font-size: 12.5px; color: var(--muted); }
+  .fl-date { grid-column: 2; grid-row: 1; }
+  .fl-row .tl-x { grid-column: 2; grid-row: 2; justify-self: end; }
+}
