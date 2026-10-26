@@ -21,16 +21,7 @@ function SectionTitle({ value, onSave }: { value: string; onSave: (t: string) =>
   );
 }
 
-function Reflection({ value, onSave }: { value: string; onSave: (t: string) => void }) {
-  const [text, setText] = useState(value);
-  useEffect(() => setText(value), [value]);
-  return (
-    <textarea className="lb-summary" rows={2} value={text} placeholder="How did this month feel?" aria-label="Reflection"
-      onChange={e => setText(e.target.value)} onBlur={() => text.trim() !== value && onSave(text.trim())} />
-  );
-}
-
-/** One month: its sections of highlights, then a reflection. */
+/** One month: its sections of highlights. */
 function MonthCard({ month, dash }: { month: Entry<"lookback">; dash: Dashboard }) {
   const [menu, setMenu] = useState(false);
   const [confirm, setConfirm] = useState(false);
@@ -75,7 +66,6 @@ function MonthCard({ month, dash }: { month: Entry<"lookback">; dash: Dashboard 
         </div>
       ))}
       </div>
-      <Reflection value={month.data.summary ?? ""} onSave={summary => dash.patch(month, { summary })} />
     </section>
   );
 }

@@ -58,7 +58,9 @@ export function planImport(have: Pick<EntriesByKind, "goalyears" | "goalcats" | 
     if (months.has(`${y}-${month}`)) { plan.skipped++; continue; }
     months.add(`${y}-${month}`);
     const sections = (m.sections ?? []).map(s => ({ id: newId(), title: str(s?.title), items: items(s?.items, false) }));
-    plan.months.push({ year: y, month, sections: sections.length ? sections : [{ id: newId(), title: "", items: [] }], ...(str(m.summary) ? { summary: str(m.summary) } : {}) });
+    // A month's summary becomes its own section, since cards show only sections.
+    if (str(m.summary)) sections.push({ id: newId(), title: "Summary", items: items([{ text: m.summary }], false) });
+    plan.months.push({ year: y, month, sections: sections.length ? sections : [{ id: newId(), title: "", items: [] }] });
   }
   return plan;
 }

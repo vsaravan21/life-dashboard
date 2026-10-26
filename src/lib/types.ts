@@ -25,8 +25,8 @@ export interface OutlineItem { id: string; text: string; depth?: number; done?: 
 export interface GoalYearData { year: number }
 /** A category of goals (Health, Career, ...) within a year. */
 export interface GoalCatData { year: number; title: string; color: string; items: OutlineItem[] }
-/** One month on the Looking Back page: titled sections of items, plus an optional reflection. */
-export interface LookbackData { year: number; month: number; sections: { id: string; title: string; items: OutlineItem[] }[]; summary?: string }
+/** One month on the Looking Back page: titled sections of items. */
+export interface LookbackData { year: number; month: number; sections: { id: string; title: string; items: OutlineItem[] }[] }
 export interface TripData { place: string; start: string; end: string; note?: string }
 export interface BookData { title: string; author?: string; status: "reading" | "want" | "done"; progress: number; finished?: string }
 export interface JournalData { caption: string; date: string; photo?: string }

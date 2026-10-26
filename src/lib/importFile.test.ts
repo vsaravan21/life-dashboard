@@ -14,7 +14,8 @@ describe("planImport", () => {
     expect(plan.years).toEqual([{ year: 2026 }]);
     expect(plan.cats[0]).toMatchObject({ year: 2026, title: "Health", color: "mint" });
     expect(plan.cats[0].items.map(i => [i.text, i.depth ?? 0, i.done])).toEqual([["Walk", 0, false], ["Daily", 1, true]]);
-    expect(plan.months[0]).toMatchObject({ year: 2026, month: 1, summary: "Good month" });
+    expect(plan.months[0]).toMatchObject({ year: 2026, month: 1 });
+    expect(plan.months[0].sections.map(s => s.title)).toEqual(["Fun", "Summary"]);
     expect(plan.months[0].sections[0].items[0]).toMatchObject({ text: "Muir Woods" });
   });
 
