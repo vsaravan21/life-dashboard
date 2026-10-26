@@ -471,3 +471,44 @@ button.linkish:hover { color: var(--accent); }
 .fin-tx-head h2 { margin: 0; font-weight: 500; font-size: 18px; }
 .fin-tx .note-search { max-width: 200px; }
 .fin-tx .pill { margin-left: 6px; }
+
+/* outlines (goals and Looking Back): nested lines indent under the one above */
+.ol-row[data-depth="1"] { padding-left: 26px; }
+.ol-row[data-depth="2"] { padding-left: 52px; }
+.ol-row[data-depth="1"] .tl-text, .ol-row[data-depth="2"] .tl-text { font-size: 13.5px; }
+.ol-row[data-depth="1"] .tl-check svg, .ol-row[data-depth="2"] .tl-check svg { width: 18px; height: 18px; }
+.ol-dot { width: 22px; height: 22px; flex: none; display: grid; place-items: center; }
+.ol-dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); opacity: .75; }
+.ol-row[data-depth="1"] .ol-dot::before, .ol-row[data-depth="2"] .ol-dot::before { width: 5px; height: 5px; background: transparent; border: 1.5px solid var(--accent); }
+.tl-new .ol-dot::before { background: var(--muted); opacity: .4; }
+
+/* goals page */
+.gl-years { padding: 12px 14px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.gl-sum { margin-left: auto; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; font-size: 13px; color: var(--muted); }
+.gl-sum b { color: var(--ink); font-weight: 600; }
+.gl-sum .gl-bar { width: 120px; }
+.gl-bar { height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; flex: none; }
+.gl-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .3s; }
+.gl-addyear { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.gl-addyear input.btn { width: 7.5em; font: inherit; font-size: 13px; color: var(--ink); text-align: center; }
+.gl-addyear input[type="month"].btn { width: auto; }
+
+/* Looking Back page: a card per month, grouped by year */
+.lb-year { display: flex; flex-direction: column; gap: 12px; }
+.lb-year-title { margin: 6px 4px 0; font-weight: 500; font-size: 24px; letter-spacing: -.01em; display: flex; align-items: baseline; gap: 10px; }
+.lb-year-title .sub { font-size: 13px; font-weight: 400; }
+.lb-group { display: flex; flex-direction: column; gap: 2px; }
+.lb-group + .lb-group { margin-top: 6px; }
+.lb-group-head { display: flex; align-items: center; gap: 6px; }
+.lb-group-head:hover .tl-x { opacity: .8; }
+.lb-section { flex: 1; min-width: 0; font-family: inherit; background: transparent; border: 0; padding: 4px 0; outline: none; color: var(--accent); }
+.lb-section::placeholder { color: var(--muted); }
+.lb-summary { font: inherit; font-size: 13.5px; line-height: 1.5; color: var(--ink); background: var(--glass-edge); border: 0; border-radius: 16px; padding: 10px 14px;
+  resize: vertical; field-sizing: content; min-height: 2.8em; outline: none; }
+.lb-summary::placeholder { color: var(--muted); }
+.lb-summary:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+@media (max-width: 720px) { .gl-sum { margin-left: 0; } }
+.ol-row { align-items: flex-start; }
+.ol-row .tl-check, .ol-row .ol-dot { margin-top: 3px; }
+.ol-row[data-depth="1"] .tl-check, .ol-row[data-depth="2"] .tl-check { margin-top: 4px; }
+.ol-text { resize: none; overflow: hidden; line-height: 1.45; field-sizing: content; display: block; }

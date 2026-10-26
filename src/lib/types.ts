@@ -1,4 +1,4 @@
-export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "journal", "wins", "notes", "lists"] as const;
+export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "journal", "wins", "notes", "lists", "goalyears", "goalcats", "lookback"] as const;
 export type Kind = (typeof KINDS)[number];
 
 /** Dates are local calendar days as "YYYY-MM-DD"; times are "HH:MM". */
@@ -19,6 +19,14 @@ export interface TodoData { text: string; due?: string; done: boolean; doneAt?: 
 export interface ListData { title: string; color: string; created: string; /** The one list shown on the home page. */ starred?: boolean }
 export interface MoneyData { label: string; amount: number; kind: "expense" | "income"; category?: string; date: string }
 export interface GoalData { title: string; target?: string; progress: number }
+/** One line in an outline: a goal (with a check) or a Looking Back item. `depth` 1 or 2 makes it a sub-item. */
+export interface OutlineItem { id: string; text: string; depth?: number; done?: boolean }
+/** A year on the Goals page. */
+export interface GoalYearData { year: number }
+/** A category of goals (Health, Career, ...) within a year. */
+export interface GoalCatData { year: number; title: string; color: string; items: OutlineItem[] }
+/** One month on the Looking Back page: titled sections of items, plus an optional reflection. */
+export interface LookbackData { year: number; month: number; sections: { id: string; title: string; items: OutlineItem[] }[]; summary?: string }
 export interface TripData { place: string; start: string; end: string; note?: string }
 export interface BookData { title: string; author?: string; status: "reading" | "want" | "done"; progress: number; finished?: string }
 export interface JournalData { caption: string; date: string; photo?: string }
@@ -36,6 +44,9 @@ export interface DataByKind {
   wins: WinData;
   notes: NoteData;
   lists: ListData;
+  goalyears: GoalYearData;
+  goalcats: GoalCatData;
+  lookback: LookbackData;
 }
 
 export interface Entry<K extends Kind = Kind> {

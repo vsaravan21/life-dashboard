@@ -7,6 +7,7 @@ const SECTIONS: { path: PagePath; label: string; icon: ReactNode }[] = [
   { path: "/todo", label: "To-do", icon: <><circle cx="12" cy="12" r="8" /><path d="m8.5 12.2 2.4 2.3 4.6-4.8" /></> },
   { path: "/finance", label: "Finance", icon: <><rect x="3.5" y="6" width="17" height="13" rx="3" /><path d="M3.5 10h17M15.5 14.5h2" /></> },
   { path: "/goals", label: "Goals", icon: <><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="1" /></> },
+  { path: "/looking-back", label: "Looking Back", icon: <><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3L4.5 9" /><path d="M4.5 4.5V9H9M12 8v4.2l2.8 1.8" /></> },
   { path: "/travel", label: "Travel", icon: <><path d="M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0c0 5.4 6.5 11 6.5 11Z" /><circle cx="12" cy="10" r="2.3" /></> },
   { path: "/reading", label: "Reading", icon: <><path d="M4 5.5C6.5 4.5 9.5 4.5 12 6c2.5-1.5 5.5-1.5 8-.5v13c-2.5-1-5.5-1-8 .5-2.5-1.5-5.5-1.5-8-.5Z" /><path d="M12 6v13" /></> },
   { path: "/achievements", label: "Achievements", icon: <path d="m12 4 2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 16.4 7.2 18.9l.9-5.4-3.9-3.8 5.4-.8Z" /> },

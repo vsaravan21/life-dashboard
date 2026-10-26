@@ -19,7 +19,7 @@ export const LIST_COLORS: Record<string, { name: string; cover: string }> = {
 const DEFAULT_COLOR = "peach";
 export const colorOf = (c: string) => LIST_COLORS[c] ?? LIST_COLORS[DEFAULT_COLOR];
 
-function Swatches({ value, onChange }: { value: string; onChange: (c: string) => void }) {
+export function Swatches({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
     <div className="ev-colors" role="radiogroup" aria-label="List color">
       {Object.entries(LIST_COLORS).map(([id, c]) => (
