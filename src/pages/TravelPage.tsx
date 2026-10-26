@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { plural } from "../components/ui";
 import { daysBetween, fmt, today } from "../lib/dates";
 import { busiestYears, byYear, countryOf, flightWhen, isInternational, isUpcoming, yearStats } from "../lib/flights";
@@ -51,10 +51,10 @@ function useMediaUrl(dash: Dashboard, ref: string) {
   return src;
 }
 
-function Slide({ dash, photo, alt }: { dash: Dashboard; photo: string; alt: string }) {
+function Slide({ dash, photo, alt, lift }: { dash: Dashboard; photo: string; alt: string; lift?: number }) {
   const src = useMediaUrl(dash, photo);
   return (
-    <div className="tr-slide">
+    <div className={"tr-slide" + (lift !== undefined ? " lifted" : "")} style={lift !== undefined ? { transform: `translateX(${lift}px) scale(.93)` } : undefined}>
       {!src ? <span className="sub">Loading…</span>
         : isVideoRef(photo) ? <video src={src} controls playsInline preload="metadata" aria-label={alt} />
         : <img src={src} alt={alt} loading="lazy" draggable={false} />}
@@ -62,89 +62,15 @@ function Slide({ dash, photo, alt }: { dash: Dashboard; photo: string; alt: stri
   );
 }
 
-function Thumb({ dash, photo }: { dash: Dashboard; photo: string }) {
-  const src = useMediaUrl(dash, photo);
-  if (!src) return null;
-  return isVideoRef(photo)
-    ? <><video src={`${src}#t=0.1`} muted playsInline preload="metadata" /><span className="tr-play" aria-hidden="true">▶</span></>
-    : <img src={src} alt="" draggable={false} />;
-}
-
-/** Thumbnails you drag (or move with the arrow keys) into a new order. */
-function Arrange({ photos, dash, onSave, onDone }: { photos: string[]; dash: Dashboard; onSave: (order: string[]) => void; onDone: () => void }) {
-  const [order, setOrder] = useState(photos);
-  const [drag, setDrag] = useState<string | null>(null);
-  const [focus, setFocus] = useState<string | null>(null);
-  const grid = useRef<HTMLOListElement>(null);
-  useEffect(() => setOrder(photos), [photos.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (focus) grid.current?.querySelector<HTMLElement>(`[data-ref="${CSS.escape(focus)}"]`)?.focus(); }, [order, focus]);
-
-  const moveTo = (ref: string, to: number) => setOrder(o => {
-    const a = o.filter(x => x !== ref);
-    a.splice(Math.max(0, Math.min(to, a.length)), 0, ref);
-    return a;
-  });
-  const commit = (next: string[]) => { if (next.join("|") !== photos.join("|")) onSave(next); };
-  const live = useRef(order);
-  live.current = order;
-  // Follow the pointer on the window, since reordering moves the thumbnail being dragged out from under it.
-  const startDrag = (ref: string) => {
-    setDrag(ref);
-    const move = (e: PointerEvent) => {
-      const over = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>(".tr-thumb")?.dataset.ref;
-      if (over && over !== ref) moveTo(ref, live.current.indexOf(over));
-    };
-    const end = (e: PointerEvent) => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", end);
-      window.removeEventListener("pointercancel", end);
-      setDrag(null);
-      if (e.type === "pointercancel") setOrder(photos);
-      else commit(live.current);
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", end);
-    window.addEventListener("pointercancel", end);
-  };
-
-  return (
-    <div className="tr-arrange">
-      <div className="tr-arrange-head">
-        <span className="sub">Drag to reorder</span>
-        <button className="btn sm primary" onClick={onDone}>Done</button>
-      </div>
-      <ol ref={grid} className="tr-thumbs" aria-label="Photo order">
-        {order.map((p, n) => (
-          <li key={p} data-ref={p} tabIndex={0} className={"tr-thumb" + (drag === p ? " dragging" : "")}
-            aria-label={`${isVideoRef(p) ? "Video" : "Photo"} ${n + 1} of ${order.length}. Use the left and right arrow keys to move it.`}
-            onPointerDown={e => { if (e.button === 0) startDrag(p); }}
-            onKeyDown={e => {
-              const d = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : 0;
-              if (!d) return;
-              e.preventDefault();
-              const next = order.filter(x => x !== p);
-              next.splice(Math.max(0, Math.min(n + d, next.length)), 0, p);
-              setOrder(next);
-              setFocus(p);
-              commit(next);
-            }}>
-            <Thumb dash={dash} photo={p} />
-            <span className="tr-thumb-n">{n + 1}</span>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
-}
-
-/** A trip's photos and videos as swipeable slides, with arrows, dots, a way to add more and a way to reorder. */
+/** A trip's photos and videos as swipeable slides, with arrows, dots and a way to add more. Drag a photo sideways to move it. */
 function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard; notify: (m: string) => void }) {
-  const photos = trip.data.photos ?? [];
+  const [draft, setDraft] = useState<string[] | null>(null);
+  const photos = draft ?? trip.data.photos ?? [];
   const track = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const [at, setAt] = useState(0);
   const [busy, setBusy] = useState(0);
-  const [arranging, setArranging] = useState(false);
+  const [lift, setLift] = useState<{ ref: string; dx: number } | null>(null);
   const i = Math.min(at, Math.max(0, photos.length - 1));
 
   const go = (n: number) => {
@@ -191,11 +117,69 @@ function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard;
     // The next photo slides into this spot; at the end, the browser pulls back to the new last one.
     setAt(Math.max(0, Math.min(i, photos.length - 2)));
   };
-  const reorder = (order: string[]) => {
-    const current = photos[i];
-    dash.patch(trip, { photos: order });
-    // Stay on the same photo wherever it moved to.
-    requestAnimationFrame(() => { const el = track.current; if (el) el.scrollTo({ left: order.indexOf(current) * el.clientWidth }); });
+  /** Move the photo at `from` one step either way, keeping it on screen. */
+  const shift = (list: string[], from: number, by: number) => {
+    const to = from + by;
+    if (to < 0 || to >= list.length) return list;
+    const next = [...list];
+    [next[from], next[to]] = [next[to], next[from]];
+    const el = track.current;
+    if (el) requestAnimationFrame(() => { el.scrollTo({ left: to * el.clientWidth }); setAt(to); });
+    return next;
+  };
+  const save = (next: string[]) => {
+    if (next.join("|") !== (trip.data.photos ?? []).join("|")) void dash.patch(trip, { photos: next }).finally(() => setDraft(null));
+    else setDraft(null);
+  };
+
+  // Press on a photo and drag it sideways: past about a third of the frame it trades places with its neighbor.
+  // A mouse picks it up as soon as it moves; a finger holds still for a moment first, so a quick swipe still flips through.
+  const onPointerDown = (e: ReactPointerEvent) => {
+    const el = track.current, slide = (e.target as HTMLElement).closest(".tr-slide");
+    if (!el || photos.length < 2 || !slide || e.button !== 0) return;
+    // Leave a video's own play bar alone.
+    if ((e.target as HTMLElement).tagName === "VIDEO" && e.clientY > slide.getBoundingClientRect().bottom - 56) return;
+    const touch = e.pointerType !== "mouse";
+    let order = [...photos], from = Math.round(el.scrollLeft / el.clientWidth), x0 = e.clientX, y0 = e.clientY, held = !touch, moved = false;
+    const ref = order[from];
+    const timer = touch ? window.setTimeout(() => { held = true; setLift({ ref, dx: 0 }); navigator.vibrate?.(15); }, 320) : 0;
+    const block = (t: TouchEvent) => { if (held) t.preventDefault(); };
+    const move = (m: PointerEvent) => {
+      const dx = m.clientX - x0;
+      if (!held) { if (Math.hypot(dx, m.clientY - y0) > 8) end(); return; }
+      if (!moved && Math.abs(dx) < 6) return;
+      moved = true;
+      m.preventDefault();
+      const w = el.clientWidth, by = dx > w / 3 ? 1 : dx < -w / 3 ? -1 : 0;
+      if (by && from + by >= 0 && from + by < order.length) {
+        order = shift(order, from, by);
+        from += by;
+        x0 += by * w;
+        setDraft(order);
+      }
+      setLift({ ref, dx: m.clientX - x0 });
+    };
+    const end = () => {
+      clearTimeout(timer);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+      el.removeEventListener("touchmove", block);
+      setLift(null);
+      if (moved) save(order);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    el.addEventListener("touchmove", block, { passive: false });
+  };
+  // With the photos in focus, the arrow keys flip through them and Shift + arrow moves the one showing.
+  const onKeyDown = (e: ReactKeyboardEvent) => {
+    const by = e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : 0;
+    if (!by || e.target !== e.currentTarget) return;
+    e.preventDefault();
+    if (e.shiftKey) save(shift(photos, i, by));
+    else go(i + by);
   };
 
   const picker = <input ref={input} type="file" accept="image/*,video/*" multiple hidden aria-label={`Add photos or videos to ${trip.data.place}`} onChange={e => add(e.target.files)} />;
@@ -208,9 +192,14 @@ function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard;
   );
   return (<>
     <div className="tr-slides" aria-roledescription="carousel" aria-label={`${trip.data.place} photos`}>
-      <div className="tr-track" ref={track} onScroll={onScroll}>
-        {photos.map((p, n) => <Slide key={p} dash={dash} photo={p} alt={`${trip.data.place}, ${isVideoRef(p) ? "video" : "photo"} ${n + 1} of ${photos.length}`} />)}
+      <div className={"tr-track" + (lift ? " lifting" : "")} ref={track} onScroll={onScroll} onPointerDown={onPointerDown} onKeyDown={onKeyDown} tabIndex={0}
+        aria-label={photos.length > 1 ? "Drag a photo sideways to move it, or press Shift and an arrow key" : undefined}>
+        {photos.map((p, n) => (
+          <Slide key={p} dash={dash} photo={p} alt={`${trip.data.place}, ${isVideoRef(p) ? "video" : "photo"} ${n + 1} of ${photos.length}`}
+            lift={lift?.ref === p ? lift.dx : undefined} />
+        ))}
       </div>
+      {lift && <span className="tr-moving" aria-live="polite">Moving to {i + 1} of {photos.length}</span>}
       {photos.length > 1 && <>
         <button className="tr-nav prev" aria-label="Previous photo" onClick={() => go(i - 1)}>‹</button>
         <button className="tr-nav next" aria-label="Next photo" onClick={() => go(i + 1)}>›</button>
@@ -223,18 +212,12 @@ function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard;
           ))}</span>
         )}
         <span className="tr-acts">
-          {photos.length > 1 && (
-            <button className={"tr-act" + (arranging ? " on" : "")} onClick={() => setArranging(a => !a)} aria-pressed={arranging} aria-label="Reorder photos" title="Reorder">
-              <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" /></svg>
-            </button>
-          )}
           <button className="tr-act" onClick={() => input.current?.click()} disabled={busy > 0} aria-label="Add photos or videos" title="Add photos or videos">{busy ? "…" : "+"}</button>
           <button className="tr-act" onClick={removeCurrent} aria-label="Remove this photo" title="Remove this one">×</button>
         </span>
       </div>
       {picker}
     </div>
-    {arranging && photos.length > 1 && <Arrange photos={photos} dash={dash} onSave={reorder} onDone={() => setArranging(false)} />}
   </>);
 }
 
