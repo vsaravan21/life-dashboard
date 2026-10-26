@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 let ctx: AudioContext | null = null;
 const audio = () => {
@@ -23,40 +23,25 @@ function blip(a: AudioContext, at: number, from: number, to: number, len: number
   osc.stop(at + len + 0.02);
 }
 
-/** Sprout's little noises, made on the fly so there are no sound files to load. */
-const NOISES: ((a: AudioContext, t: number) => void)[] = [
+/** Sprout's two noises, made on the fly so there are no sound files to load. `k` nudges the pitch so no two taps sound quite alike. */
+const NOISES: ((a: AudioContext, t: number, k: number) => void)[] = [
   // boop
-  (a, t) => blip(a, t, 520, 880, 0.16),
-  // squeak
-  (a, t) => blip(a, t, 1200, 1900, 0.09, 0.12, "triangle"),
-  // boing
-  (a, t) => { blip(a, t, 300, 700, 0.12); blip(a, t + 0.11, 700, 420, 0.18, 0.14); },
+  (a, t, k) => blip(a, t, 520 * k, 880 * k, 0.16),
   // giggle
-  (a, t) => [0, 0.07, 0.14, 0.21].forEach((d, i) => blip(a, t + d, 900 + i * 90, 1150 + i * 90, 0.06, 0.12, "triangle")),
-  // pop
-  (a, t) => blip(a, t, 1600, 220, 0.07, 0.2),
-  // happy chirp
-  (a, t) => { blip(a, t, 660, 990, 0.08, 0.14); blip(a, t + 0.09, 880, 1320, 0.1, 0.14); },
-  // sleepy yawn
-  (a, t) => blip(a, t, 700, 260, 0.38, 0.12),
-  // ding-ding
-  (a, t) => { blip(a, t, 1318, 1318, 0.14, 0.1); blip(a, t + 0.12, 1760, 1760, 0.2, 0.1); },
+  (a, t, k) => [0, 0.07, 0.14, 0.21].forEach((d, i) => blip(a, t + d, (900 + i * 90) * k, (1150 + i * 90) * k, 0.06, 0.12, "triangle")),
 ];
 
-/** The big mascot on the home page: tap it and it hops and makes a cute noise. */
+/** The big mascot on the home page: tap it and it hops and giggles or boops. */
 export function Sprout() {
   const [hop, setHop] = useState(0);
-  const last = useRef(-1);
   useEffect(() => () => { void ctx?.suspend(); }, []);
 
   const tap = () => {
     setHop(h => h + 1);
     const a = audio();
     if (!a) return;
-    let i = Math.floor(Math.random() * NOISES.length);
-    if (i === last.current) i = (i + 1) % NOISES.length;
-    last.current = i;
-    NOISES[i](a, a.currentTime + 0.01);
+    const noise = NOISES[Math.floor(Math.random() * NOISES.length)];
+    noise(a, a.currentTime + 0.01, 0.9 + Math.random() * 0.2);
   };
 
   return (
