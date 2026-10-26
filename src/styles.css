@@ -603,3 +603,22 @@ button.linkish:hover { color: var(--accent); }
 .bk-notes { font: inherit; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--solid); border: 1px solid var(--line); border-radius: 18px; padding: 12px 14px; resize: vertical; min-height: 9em; }
 .bk-notes:focus-visible, .bk-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 @media (max-width: 560px) { .bk-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 18px 12px; } .bk-dlg-cover { width: 84px; } }
+
+/* Sprout: tap the mascot for a pep talk */
+.sprout { position: relative; display: flex; flex-direction: column; align-items: center; }
+.sprout-btn { border: 0; background: none; padding: 0; border-radius: 50%; cursor: pointer; }
+.sprout-btn:hover .mascot { transform: rotate(-6deg) scale(1.04); }
+.sprout-btn .mascot { transition: transform .2s; }
+.mascot.hop { animation: sprout-hop .6s cubic-bezier(.3,1.6,.5,1); }
+@keyframes sprout-hop { 0% { transform: scale(1); } 30% { transform: translateY(-10px) scale(1.08, .94); } 60% { transform: translateY(0) scale(.96, 1.05); } 100% { transform: scale(1); } }
+.sprout-bubble { position: absolute; left: calc(100% + 14px); top: 50%; transform: translateY(-50%); z-index: 5; width: max-content; max-width: min(240px, calc(50vw - 92px), calc(50cqi - 76px));
+  display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 16px; border-radius: 20px; background: var(--solid); color: var(--ink);
+  font-size: 14px; font-weight: 500; line-height: 1.35; text-align: left; box-shadow: 0 14px 30px -14px rgba(96,72,110,.55);
+  animation: sprout-pop .35s cubic-bezier(.3,1.5,.5,1); }
+.sprout-bubble::after { content: ""; position: absolute; right: 100%; top: 50%; margin-top: -7px; border: 7px solid transparent; border-right-color: var(--solid); }
+@keyframes sprout-pop { from { opacity: 0; transform: translate(-6px, -50%) scale(.9); } to { opacity: 1; transform: translate(0, -50%) scale(1); } }
+@media (max-width: 560px) { .sprout-bubble { font-size: 12.5px; padding: 8px 8px 8px 12px; border-radius: 16px; } .sprout-mute { width: 24px; height: 24px; } }
+.sprout-mute { border: 0; background: var(--glass-edge); color: var(--accent); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+.sprout-mute[aria-pressed="false"] { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .mascot.hop, .sprout-bubble { animation: none; } }
+.greet-card { container-type: inline-size; }

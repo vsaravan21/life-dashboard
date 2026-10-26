@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { Nav } from "./components/Nav";
+import { Sprout } from "./components/Sprout";
 import { plural } from "./components/ui";
 import { daysBetween, dayOfYear, daysInYear, isoWeek, today } from "./lib/dates";
 import { cloudStore, demoStore, supabase, type Store } from "./lib/store";
@@ -45,7 +46,7 @@ function Greeting() {
   const h = now.getHours();
   return (
     <section className="glass greet-card">
-      <img className="mascot lg" src="/mascot.svg" alt="" />
+      <Sprout />
       <h1>{h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"} <b>{NAME}</b>, here's your day.</h1>
       <div className="date">
         {now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} · Week {isoWeek(now)} · day {dayOfYear(now)} of {daysInYear(now.getFullYear())}
