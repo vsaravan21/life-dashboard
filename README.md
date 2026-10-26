@@ -25,7 +25,7 @@ Without Supabase keys the app runs in **demo mode**: it fills itself with exampl
    ```
 5. Restart `npm run dev`. You'll be asked for your email and sent a sign-in link. On your first sign-in the dashboard adds a few entries marked "example". The **Clear examples** button removes them.
 
-**Sign-in is currently off on the live site** (`VITE_SIGN_IN=off` in `.env.production`), so entries are kept in each browser. Delete that line to turn Supabase sign-in and syncing back on.
+**The live site is open** (`VITE_SIGN_IN=off` in `.env.production`): anyone can use it, saving to their own browser. **Backup & sync** (the cloud link at the bottom of the sidebar, `/account`) signs in with the same account as Finance; once signed in, everything saves to Supabase and shows on every device, and a button moves what the browser already holds (photos included) into the account. Run [`supabase/sync-setup.sql`](supabase/sync-setup.sql) once first so every section is allowed in the `entries` table. Deleting the `VITE_SIGN_IN=off` line instead makes the whole site require sign-in.
 
 The anon key is meant to be public. Row-level security is what keeps your data private, so never put the `service_role` key in this app.
 

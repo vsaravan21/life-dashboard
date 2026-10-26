@@ -8,7 +8,10 @@ import { useEffect, useState } from "react";
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-/** Sign-in for Finance only. It keeps its session under its own key so it never mixes with other sign-ins. */
+/**
+ * Your account: one sign-in for Finance and for syncing the dashboard. It keeps
+ * its session under its own key (named before sync existed, so it stays).
+ */
 export const financeAuth: SupabaseClient | null = url && anonKey
   ? createClient(url, anonKey, { auth: { storageKey: "life-dashboard:finance-auth", detectSessionInUrl: true } })
   : null;

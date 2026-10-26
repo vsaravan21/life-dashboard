@@ -611,3 +611,22 @@ button.linkish:hover { color: var(--accent); }
 .mascot.hop { animation: sprout-hop .6s cubic-bezier(.3,1.6,.5,1); }
 @keyframes sprout-hop { 0% { transform: scale(1); } 30% { transform: translateY(-10px) scale(1.08, .94); } 60% { transform: translateY(0) scale(.96, 1.05); } 100% { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .mascot.hop { animation: none; } }
+
+/* backup and sync */
+.sync-link { display: flex; align-items: center; gap: 10px; margin: 6px 4px 0; padding: 9px 12px; border-radius: 999px; font-size: 13.5px; font-weight: 500;
+  color: var(--muted) !important; background: var(--glass-edge); text-decoration: none; }
+.sync-link svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.sync-link:hover, .sync-link.on { color: var(--accent) !important; }
+.sync-link.synced { color: var(--ink) !important; }
+.sync-link.synced svg { color: var(--accent); }
+@media (max-width: 979px) { .sync-link { margin: 0 0 0 auto; flex: none; } .sync-link span { display: none; } }
+.acct-card { padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; max-width: 720px; width: 100%; margin-inline: auto; }
+.acct-card .sub { margin: 0; font-size: 14px; line-height: 1.5; }
+.acct-head { display: flex; align-items: center; gap: 14px; }
+.acct-head h2 { margin: 0; font-weight: 500; font-size: 22px; }
+.acct-head .sub { display: flex; align-items: center; gap: 6px; }
+.acct-icon { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); flex: none; }
+.acct-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.acct-acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.acct-prog { display: flex; align-items: center; gap: 12px; }
+.acct-prog .gl-bar { flex: 1; }

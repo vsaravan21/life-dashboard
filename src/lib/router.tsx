@@ -11,6 +11,7 @@ export const PAGES = [
   { path: "/reading", panel: "p-books", label: "Reading", cover: "c-books" },
   { path: "/journal", panel: "p-journal", label: "Photo journal", cover: "c-journal" },
   { path: "/notes", panel: "p-notes", label: "Notes", cover: "c-notes" },
+  { path: "/account", panel: "", label: "Backup & sync", cover: "c-goals" },
 ] as const;
 
 export type PagePath = "/" | (typeof PAGES)[number]["path"];

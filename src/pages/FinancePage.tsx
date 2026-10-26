@@ -14,13 +14,14 @@ const cents = (n: number, currency: string) => {
   catch { return n.toFixed(2); }
 };
 
-const Lock = () => (
+export const Lock = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="5" y="10.5" width="14" height="10" rx="2.5" /><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
   </svg>
 );
 
-function SignInCard() {
+/** Email and password (or emailed link) sign-in for your account. */
+export function SignInCard({ title = "Finance is private", sub = "Sign in to see your accounts. The rest of the dashboard stays open as it is." }: { title?: string; sub?: string }) {
   const [mode, setMode] = useState<"password" | "link">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,12 +43,12 @@ function SignInCard() {
   return (
     <section className="glass fin-lock">
       <span className="fin-lock-icon"><Lock /></span>
-      <h2>Finance is private</h2>
+      <h2>{title}</h2>
       {state === "sent" ? (
         <p className="sub">Check <b>{email}</b> for a sign-in link. Open it on this device and you'll land back here.</p>
       ) : (
         <>
-          <p className="sub">Sign in to see your accounts. The rest of the dashboard stays open as it is.</p>
+          <p className="sub">{sub}</p>
           <form className="fin-signin" onSubmit={submit}>
             <input type="email" required autoComplete="email" placeholder="Your email" aria-label="Email" value={email} onChange={e => setEmail(e.target.value)} />
             {mode === "password" && (
@@ -68,7 +69,7 @@ function SignInCard() {
 }
 
 /** Set or change the Finance password while signed in. */
-function PasswordForm({ onDone }: { onDone: (msg: string) => void }) {
+export function PasswordForm({ onDone }: { onDone: (msg: string) => void }) {
   const [pw, setPw] = useState("");
   const [again, setAgain] = useState("");
   const [busy, setBusy] = useState(false);
@@ -84,7 +85,7 @@ function PasswordForm({ onDone }: { onDone: (msg: string) => void }) {
   };
   return (
     <form className="glass fin-pw" onSubmit={submit}>
-      <span className="label">Finance password</span>
+      <span className="label">Password</span>
       <div className="fin-signin">
         <input type="password" autoComplete="new-password" placeholder="New password" aria-label="New password" value={pw} onChange={e => setPw(e.target.value)} />
         <input type="password" autoComplete="new-password" placeholder="Type it again" aria-label="Repeat new password" value={again} onChange={e => setAgain(e.target.value)} />
@@ -231,7 +232,7 @@ function Signedin({ email }: { email: string }) {
         <span className="grow1" />
         <button className="btn sm" onClick={load}>Refresh</button>
         <button className="btn sm" onClick={() => { setPwOpen(o => !o); setPwNote(""); }}>Set password</button>
-        <button className="btn sm" onClick={() => signOutOfFinance()}>Lock Finance</button>
+        <button className="btn sm" onClick={() => signOutOfFinance()}>Sign out</button>
       </div>
       {pwOpen && <PasswordForm onDone={msg => { setPwOpen(false); setPwNote(msg); }} />}
       {pwNote && <div className="notice"><span>{pwNote}</span></div>}

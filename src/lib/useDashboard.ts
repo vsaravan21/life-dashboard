@@ -17,6 +17,8 @@ export interface Dashboard {
   patch<K extends Kind>(entry: Entry<K>, data: Partial<DataByKind[K]>): Promise<void>;
   remove(entry: Entry): Promise<void>;
   setCurrency(currency: string): Promise<void>;
+  /** Load everything again from the store. */
+  reload(): Promise<void>;
   store: Store;
 }
 
@@ -85,5 +87,5 @@ export function useDashboard(store: Store, notify: (msg: string) => void): Dashb
 
   const entries = useMemo(() => group(list), [list]);
 
-  return { ready, error, entries, prefs, add, patch, remove, setCurrency, store };
+  return { ready, error, entries, prefs, add, patch, remove, setCurrency, reload: refresh, store };
 }

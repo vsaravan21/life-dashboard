@@ -14,7 +14,7 @@ const SECTIONS: { path: PagePath; label: string; icon: ReactNode }[] = [
   { path: "/journal", label: "Photo journal", icon: <><rect x="3.5" y="5" width="17" height="14" rx="3" /><circle cx="9" cy="10" r="1.6" /><path d="m4 17 5-4.5 4 3.5 3-2.5 4 3.5" /></> },
 ];
 
-export function Nav({ route, onSignOut }: { route: PagePath; onSignOut?: () => void }) {
+export function Nav({ route, onSignOut, sync }: { route: PagePath; onSignOut?: () => void; sync?: { email: string } | null }) {
   return (
     <aside className="side glass">
       <Link to="/" className="brand"><img className="mascot" src="/mascot.svg" alt="" /><b>My Life</b></Link>
@@ -27,6 +27,12 @@ export function Nav({ route, onSignOut }: { route: PagePath; onSignOut?: () => v
         ))}
       </nav>
       {onSignOut && <button className="btn sm signout" onClick={onSignOut}>Sign out</button>}
+      {sync !== undefined && (
+        <Link to="/account" className={"sync-link" + (route === "/account" ? " on" : "") + (sync ? " synced" : "")} aria-label={sync ? `Synced as ${sync.email}` : "Sign in to back up and sync"}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18.5h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7 9.6a4.5 4.5 0 0 0 0 8.9Z" />{sync && <path d="m9.5 14 1.8 1.8 3.4-3.6" />}</svg>
+          <span>{sync ? "Synced" : "Sign in to sync"}</span>
+        </Link>
+      )}
     </aside>
   );
 }

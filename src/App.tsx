@@ -15,6 +15,8 @@ import { GoalsPage } from "./pages/GoalsPage";
 import { LookingBackPage } from "./pages/LookingBackPage";
 import { TravelPage } from "./pages/TravelPage";
 import { ReadingPage } from "./pages/ReadingPage";
+import { AccountPage } from "./pages/AccountPage";
+import { financeAuth, useFinanceSession } from "./lib/finance";
 import { EmptyPage } from "./pages/PageShell";
 import { Calendar } from "./sections/Calendar";
 import { Journal } from "./sections/Journal";
@@ -75,7 +77,9 @@ function Summary({ dash }: { dash: Dashboard }) {
   );
 }
 
-function DashboardView({ store, onSignOut }: { store: Store; onSignOut?: () => void }) {
+type Sync = { email: string; userId: string } | null;
+
+function DashboardView({ store, onSignOut, sync }: { store: Store; onSignOut?: () => void; sync?: Sync }) {
   const { msg, notify } = useToast();
   const dash = useDashboard(store, notify);
   const route = useRoute();
@@ -103,7 +107,7 @@ function DashboardView({ store, onSignOut }: { store: Store; onSignOut?: () => v
     <>
       <div className="glow" aria-hidden="true" />
       <div className="wrap">
-        <Nav route={route} onSignOut={onSignOut} />
+        <Nav route={route} onSignOut={onSignOut} sync={sync === undefined ? undefined : sync && { email: sync.email }} />
         <main id="top">
           {dash.error && <div className="notice">Couldn't load your data: {dash.error}</div>}
           {dash.ready && (
@@ -113,6 +117,7 @@ function DashboardView({ store, onSignOut }: { store: Store; onSignOut?: () => v
               : route === "/todo" ? <TodoPage dash={dash} />
               : route === "/finance" ? <FinancePage />
               : route === "/goals" ? <GoalsPage dash={dash} notify={notify} />
+              : route === "/account" ? <AccountPage dash={dash} sync={sync ?? null} />
               : route === "/reading" ? <ReadingPage dash={dash} notify={notify} />
               : route === "/travel" ? <TravelPage dash={dash} notify={notify} />
               : route === "/looking-back" ? <LookingBackPage dash={dash} notify={notify} />
@@ -154,6 +159,19 @@ function SignIn() {
   );
 }
 
+/**
+ * The open site: anyone can use it, saving to their browser. Signing in (the
+ * same account as Finance) switches to saving in that account, synced everywhere.
+ */
+function OpenApp() {
+  const session = useFinanceSession();
+  const userId = session?.user.id;
+  const store = useMemo(() => (financeAuth && userId ? cloudStore(financeAuth, userId) : demoStore()), [userId]);
+  if (session === undefined) return <div className="glow" aria-hidden="true" />;
+  const sync = financeAuth ? (session ? { email: session.user.email ?? "", userId: session.user.id } : null) : undefined;
+  return <DashboardView key={userId ?? "browser"} store={store} sync={sync} />;
+}
+
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(supabase ? undefined : null);
   useEffect(() => {
@@ -165,7 +183,7 @@ export default function App() {
   const userId = session?.user.id;
   const store = useMemo(() => (supabase && userId ? cloudStore(supabase, userId) : supabase ? null : demoStore()), [userId]);
 
-  if (!supabase) return <DashboardView store={store!} />;
+  if (!supabase) return <OpenApp />;
   if (session === undefined) return <div className="glow" aria-hidden="true" />;
   if (!session || !store) return <SignIn />;
   return <DashboardView key={userId} store={store} onSignOut={() => supabase!.auth.signOut()} />;
