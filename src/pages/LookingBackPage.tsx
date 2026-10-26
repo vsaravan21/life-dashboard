@@ -8,8 +8,8 @@ import { PageShell } from "./PageShell";
 
 /** Each month keeps its own color, cycling through the section paints. */
 const COLORS = Object.keys(LIST_COLORS);
-const monthCover = (month: number) => colorOf(COLORS[(month - 1) % COLORS.length]).cover;
-const monthName = (month: number) => new Date(2000, month - 1, 1).toLocaleDateString(undefined, { month: "long" });
+export const monthCover = (month: number) => colorOf(COLORS[(month - 1) % COLORS.length]).cover;
+export const monthName = (month: number) => new Date(2000, month - 1, 1).toLocaleDateString(undefined, { month: "long" });
 
 function SectionTitle({ value, onSave }: { value: string; onSave: (t: string) => void }) {
   const [text, setText] = useState(value);

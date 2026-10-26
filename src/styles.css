@@ -511,3 +511,4 @@ button.linkish:hover { color: var(--accent); }
 /* long goal and month cards stop growing after about a dozen lines and scroll inside */
 .card-scroll { max-height: 480px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px;
   scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.home-scroll { max-height: 340px; }

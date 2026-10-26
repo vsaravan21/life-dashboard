@@ -14,8 +14,8 @@ import { GoalsPage } from "./pages/GoalsPage";
 import { LookingBackPage } from "./pages/LookingBackPage";
 import { EmptyPage } from "./pages/PageShell";
 import { Calendar } from "./sections/Calendar";
-import { Goals } from "./sections/Goals";
 import { Journal } from "./sections/Journal";
+import { LookingBack } from "./sections/LookingBack";
 import { Notes } from "./sections/Notes";
 import { Reading } from "./sections/Reading";
 import { Todos } from "./sections/Todos";
@@ -90,7 +90,7 @@ function DashboardView({ store, onSignOut }: { store: Store; onSignOut?: () => v
       <div className="grid">
         <Calendar dash={dash} />
         <Todos dash={dash} />
-        <Goals dash={dash} />
+        <LookingBack dash={dash} />
         <Travel dash={dash} notify={notify} />
         <Reading dash={dash} />
         <Wins dash={dash} />
