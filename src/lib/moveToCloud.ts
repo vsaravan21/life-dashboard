@@ -12,7 +12,7 @@ const stored = (r: string | undefined): r is string => !!r && r !== "none" && !i
 /** An entry's data without photo refs or links to other entries, to tell whether two entries are the same thing. */
 function fingerprint(e: Entry) {
   const d = { ...(e.data as unknown as Record<string, unknown>) };
-  delete d.photo; delete d.photos; delete d.listId;
+  delete d.photo; delete d.photos; delete d.inspo; delete d.listId;
   if (e.kind === "books" && typeof d.cover === "string" && !isWeb(d.cover)) delete d.cover;
   return `${e.kind}:${JSON.stringify(d, Object.keys(d).sort())}`;
 }
@@ -44,8 +44,9 @@ export async function moveToCloud(local: Store, cloud: Store, cloudEntries: Entr
     } else {
       const data = structuredClone(e.data) as unknown as Record<string, unknown>;
       if (e.kind === "journal" && stored(data.photo as string)) data.photo = (await copyPhoto(data.photo as string)) ?? undefined;
-      if (e.kind === "trips" && Array.isArray(data.photos))
-        data.photos = (await Promise.all((data.photos as string[]).map(p => (stored(p) ? copyPhoto(p) : p)))).filter(Boolean);
+      for (const key of ["photos", "inspo"])
+        if ((e.kind === "trips" || e.kind === "projects") && Array.isArray(data[key]))
+          data[key] = (await Promise.all((data[key] as string[]).map(p => (stored(p) ? copyPhoto(p) : p)))).filter(Boolean);
       if (e.kind === "books" && stored(data.cover as string)) data.cover = (await copyPhoto(data.cover as string)) ?? "";
       if (e.kind === "todos" && typeof data.listId === "string") data.listId = ids.get(data.listId) ?? data.listId;
       const added = await cloud.add(e.kind as Kind, data as unknown as DataByKind[Kind]);

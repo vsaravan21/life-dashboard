@@ -63,9 +63,12 @@ function Slide({ dash, photo, alt, lift }: { dash: Dashboard; photo: string; alt
 }
 
 /** A trip's photos and videos as swipeable slides, with arrows, dots and a way to add more. Drag a photo sideways to move it. */
-function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard; notify: (m: string) => void }) {
+export function Slides({ trip, label, dash, notify }: { trip: Entry<"trips"> | Entry<"projects">; label: string; dash: Dashboard; notify: (m: string) => void }) {
+  const saved = trip.data.photos;
+  // Trips and projects both keep their slides in `photos`.
+  const setPhotos = (photos: string[]) => dash.patch(trip as Entry<"trips">, { photos });
   const [draft, setDraft] = useState<string[] | null>(null);
-  const photos = draft ?? trip.data.photos ?? [];
+  const photos = draft ?? saved ?? [];
   const track = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const [at, setAt] = useState(0);
@@ -105,14 +108,14 @@ function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard;
     }
     if (refs.length) {
       const start = photos.length;
-      await dash.patch(trip, { photos: [...photos, ...refs] });
+      await setPhotos([...photos, ...refs]);
       requestAnimationFrame(() => go(start));
     }
   };
   const removeCurrent = async () => {
     const ref = photos[i];
     if (!ref) return;
-    await dash.patch(trip, { photos: photos.filter((_, n) => n !== i) });
+    await setPhotos(photos.filter((_, n) => n !== i));
     dash.store.removePhoto(ref).catch(() => undefined);
     // The next photo slides into this spot; at the end, the browser pulls back to the new last one.
     setAt(Math.max(0, Math.min(i, photos.length - 2)));
@@ -128,7 +131,7 @@ function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard;
     return next;
   };
   const save = (next: string[]) => {
-    if (next.join("|") !== (trip.data.photos ?? []).join("|")) void dash.patch(trip, { photos: next }).finally(() => setDraft(null));
+    if (next.join("|") !== (saved ?? []).join("|")) void setPhotos(next).finally(() => setDraft(null));
     else setDraft(null);
   };
 
@@ -182,7 +185,7 @@ function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard;
     else go(i + by);
   };
 
-  const picker = <input ref={input} type="file" accept="image/*,video/*" multiple hidden aria-label={`Add photos or videos to ${trip.data.place}`} onChange={e => add(e.target.files)} />;
+  const picker = <input ref={input} type="file" accept="image/*,video/*" multiple hidden aria-label={`Add photos or videos to ${label}`} onChange={e => add(e.target.files)} />;
   if (!photos.length) return (
     <button className="tr-empty" onClick={() => input.current?.click()} disabled={busy > 0}>
       <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="3" /><circle cx="9" cy="10" r="1.6" /><path d="m4 17 5-4.5 4 3.5 3-2.5 4 3.5" /></svg>
@@ -191,11 +194,11 @@ function Slides({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboard;
     </button>
   );
   return (<>
-    <div className="tr-slides" aria-roledescription="carousel" aria-label={`${trip.data.place} photos`}>
+    <div className="tr-slides" aria-roledescription="carousel" aria-label={`${label} photos`}>
       <div className={"tr-track" + (lift ? " lifting" : "")} ref={track} onScroll={onScroll} onPointerDown={onPointerDown} onKeyDown={onKeyDown} tabIndex={0}
         aria-label={photos.length > 1 ? "Drag a photo sideways to move it, or press Shift and an arrow key" : undefined}>
         {photos.map((p, n) => (
-          <Slide key={p} dash={dash} photo={p} alt={`${trip.data.place}, ${isVideoRef(p) ? "video" : "photo"} ${n + 1} of ${photos.length}`}
+          <Slide key={p} dash={dash} photo={p} alt={`${label}, ${isVideoRef(p) ? "video" : "photo"} ${n + 1} of ${photos.length}`}
             lift={lift?.ref === p ? lift.dx : undefined} />
         ))}
       </div>
@@ -271,7 +274,7 @@ function TripCard({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboar
         </div>
       )}
       {trip.data.note && <p className="sub tr-note">{trip.data.note}</p>}
-      <Slides trip={trip} dash={dash} notify={notify} />
+      <Slides trip={trip} label={trip.data.place} dash={dash} notify={notify} />
     </section>
   );
 }
