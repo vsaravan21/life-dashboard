@@ -1,4 +1,4 @@
-export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "journal", "wins", "notes", "lists", "goalyears", "goalcats", "lookback", "flights"] as const;
+export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "journal", "wins", "notes", "lists", "goalyears", "goalcats", "lookback", "flights", "gratitude"] as const;
 export type Kind = (typeof KINDS)[number];
 
 /** Dates are local calendar days as "YYYY-MM-DD"; times are "HH:MM". */
@@ -44,6 +44,9 @@ export interface FlightData { date: string; from: string; to: string; reason?: s
 export interface BookData { title: string; author?: string; status: "reading" | "want" | "done"; progress: number; finished?: string; cover?: string; thoughts?: string }
 export interface JournalData { caption: string; date: string; photo?: string }
 export interface WinData { title: string; date: string; note?: string }
+/** A sticky note on the Gratitude Board. `at` is when it was written, in ms. */
+export interface GratitudeData { text: string; color: string; at: number }
+
 export interface NoteData { title: string; body: string; pinned: boolean; updatedAt: number }
 
 export interface DataByKind {
@@ -61,6 +64,7 @@ export interface DataByKind {
   goalcats: GoalCatData;
   lookback: LookbackData;
   flights: FlightData;
+  gratitude: GratitudeData;
 }
 
 export interface Entry<K extends Kind = Kind> {

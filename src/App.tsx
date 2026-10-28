@@ -9,6 +9,7 @@ import { PAGES, useRoute } from "./lib/router";
 import { useDashboard, type Dashboard } from "./lib/useDashboard";
 import { CalendarPage } from "./pages/CalendarPage";
 import { NotesPage } from "./pages/NotesPage";
+import { GratitudePage } from "./pages/GratitudePage";
 import { TodoPage } from "./pages/TodoPage";
 import { FinancePage } from "./pages/FinancePage";
 import { GoalsPage } from "./pages/GoalsPage";
@@ -119,6 +120,7 @@ function DashboardView({ store, onSignOut, sync }: { store: Store; onSignOut?: (
               : route === "/goals" ? <GoalsPage dash={dash} notify={notify} />
               : route === "/account" ? <AccountPage dash={dash} sync={sync ?? null} />
               : route === "/reading" ? <ReadingPage dash={dash} notify={notify} />
+              : route === "/gratitude" ? <GratitudePage dash={dash} />
               : route === "/travel" ? <TravelPage dash={dash} notify={notify} />
               : route === "/looking-back" ? <LookingBackPage dash={dash} notify={notify} />
               : <EmptyPage path={route} />

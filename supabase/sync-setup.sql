@@ -60,7 +60,5 @@ create policy "own journal photos" on storage.objects
   using (bucket_id = 'journal' and (storage.foldername(name))[1] = auth.uid()::text)
   with check (bucket_id = 'journal' and (storage.foldername(name))[1] = auth.uid()::text);
 
--- Allow every section the dashboard has today.
+-- Any section name is allowed, so new pages never need another database change.
 alter table public.entries drop constraint if exists entries_kind_check;
-alter table public.entries add constraint entries_kind_check
-  check (kind in ('events', 'todos', 'money', 'goals', 'trips', 'books', 'journal', 'wins', 'notes', 'lists', 'goalyears', 'goalcats', 'lookback', 'flights'));

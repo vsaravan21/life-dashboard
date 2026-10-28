@@ -643,3 +643,32 @@ button.linkish:hover { color: var(--accent); }
 .tr-slide.lifted { z-index: 2; border-radius: 14px; box-shadow: 0 16px 30px -14px rgba(60,40,70,.7); transition: box-shadow .15s; }
 .tr-moving { position: absolute; z-index: 3; left: 50%; top: 12px; transform: translateX(-50%); padding: 4px 11px; border-radius: 999px; background: rgba(0,0,0,.5);
   color: #fff; font-size: 12px; font-weight: 500; pointer-events: none; backdrop-filter: blur(6px); }
+
+/* Gratitude Board: flat pastel sticky notes */
+.sticky-butter { --sticky: #fff0a6; }
+.sticky-peach  { --sticky: #ffd6bf; }
+.sticky-blush  { --sticky: #ffd2de; }
+.sticky-lilac  { --sticky: #e2d6ff; }
+.sticky-sky    { --sticky: #cfe5fb; }
+.sticky-mint   { --sticky: #ccefdc; }
+.gr-new, .gr-note { background: var(--sticky); color: #3b3340; border-radius: 6px 6px 18px 6px; box-shadow: 0 1px 1px rgba(60,40,70,.08), 0 10px 22px -12px rgba(60,40,70,.45); }
+.gr-new { max-width: 520px; margin: 0 auto 6px; padding: 18px 18px 12px; display: grid; gap: 10px; }
+.gr-new .gr-text { font-size: 16px; min-height: 52px; }
+.gr-text { width: 100%; border: 0; background: transparent; resize: none; overflow: hidden; font: inherit; font-size: 15px; line-height: 1.45; color: inherit; padding: 0; outline: none; }
+.gr-text::placeholder { color: rgba(59,51,64,.5); }
+.gr-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.gr-dots { display: inline-flex; gap: 5px; }
+.gr-dot { width: 16px; height: 16px; border-radius: 50%; padding: 0; border: 1.5px solid rgba(59,51,64,.25); background: var(--sticky); cursor: pointer; }
+.gr-dot.on { border-color: #3b3340; box-shadow: 0 0 0 2px rgba(255,255,255,.7) inset; }
+.gr-count { text-align: center; margin: 4px 0 0; }
+.gr-board { list-style: none; margin: 0; padding: 8px 4px 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 22px; align-items: start; }
+.gr-note { position: relative; padding: 26px 16px 10px; display: grid; gap: 12px; min-height: 150px; grid-template-rows: 1fr auto; transition: rotate .2s, transform .2s; }
+.gr-note::before { content: ""; position: absolute; top: -8px; left: 50%; width: 64px; height: 18px; transform: translateX(-50%) rotate(-2deg); background: rgba(255,255,255,.55); border-radius: 2px; box-shadow: 0 1px 2px rgba(60,40,70,.12); }
+.gr-note:hover, .gr-note:focus-within { rotate: 0deg !important; transform: translateY(-2px); z-index: 1; }
+.gr-time { font-size: 11.5px; color: rgba(59,51,64,.62); }
+.gr-tools { display: inline-flex; align-items: center; gap: 6px; opacity: 0; transition: opacity .15s; }
+.gr-note:hover .gr-tools, .gr-note:focus-within .gr-tools { opacity: 1; }
+@media (hover: none) { .gr-tools { opacity: 1; } }
+.gr-tools .gr-dot { width: 12px; height: 12px; }
+.gr-del { border: 0; background: rgba(255,255,255,.55); color: #3b3340; border-radius: 999px; min-width: 22px; height: 22px; padding: 0 7px; font: inherit; font-size: 13px; cursor: pointer; }
+.gr-del.sure { background: #e5484d; color: #fff; font-size: 11.5px; }

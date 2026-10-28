@@ -7,6 +7,7 @@ export const PAGES = [
   { path: "/finance", panel: "p-money", label: "Finance", cover: "c-money" },
   { path: "/goals", panel: "p-goals", label: "Goals", cover: "c-goals" },
   { path: "/looking-back", panel: "p-lookback", label: "Looking Back", cover: "c-journal" },
+  { path: "/gratitude", panel: "", label: "Gratitude Board", cover: "c-notes" },
   { path: "/travel", panel: "p-trips", label: "Travel", cover: "c-trips" },
   { path: "/reading", panel: "p-books", label: "Reading", cover: "c-books" },
   { path: "/journal", panel: "p-journal", label: "Photo journal", cover: "c-journal" },
