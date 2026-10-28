@@ -662,7 +662,7 @@ button.linkish:hover { color: var(--accent); }
 .gr-dot.on { border-color: #3b3340; box-shadow: 0 0 0 2px rgba(255,255,255,.7) inset; }
 .gr-count { text-align: center; margin: 4px 0 0; }
 .gr-board { list-style: none; margin: 0; padding: 8px 4px 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 22px; align-items: start; }
-.gr-note { position: relative; padding: 26px 16px 10px; display: grid; gap: 12px; min-height: 150px; grid-template-rows: 1fr auto; transition: rotate .2s, transform .2s; }
+.gr-note { position: relative; padding: 26px 16px 10px; display: grid; gap: 10px; height: 210px; grid-template-rows: minmax(0, 1fr) auto; transition: rotate .2s, transform .2s; }
 .gr-note::before { content: ""; position: absolute; top: -8px; left: 50%; width: 64px; height: 18px; transform: translateX(-50%) rotate(-2deg); background: rgba(255,255,255,.55); border-radius: 2px; box-shadow: 0 1px 2px rgba(60,40,70,.12); }
 .gr-note:hover, .gr-note:focus-within { rotate: 0deg !important; transform: translateY(-2px); z-index: 1; }
 .gr-time { font-size: 11.5px; color: rgba(59,51,64,.62); }
@@ -672,3 +672,5 @@ button.linkish:hover { color: var(--accent); }
 .gr-tools .gr-dot { width: 12px; height: 12px; }
 .gr-del { border: 0; background: rgba(255,255,255,.55); color: #3b3340; border-radius: 999px; min-width: 22px; height: 22px; padding: 0 7px; font: inherit; font-size: 13px; cursor: pointer; }
 .gr-del.sure { background: #e5484d; color: #fff; font-size: 11.5px; }
+/* Every sticky is the same size; longer notes scroll inside it. */
+.gr-scroll { height: 100%; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(59,51,64,.25) transparent; }

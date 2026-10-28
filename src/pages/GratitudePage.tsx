@@ -34,9 +34,7 @@ const fit = (el: HTMLTextAreaElement | null) => { if (el) { el.style.height = "a
 function Sticky({ note, dash }: { note: Entry<"gratitude">; dash: Dashboard }) {
   const [text, setText] = useState(note.data.text);
   const [confirm, setConfirm] = useState(false);
-  const area = useRef<HTMLTextAreaElement>(null);
   useEffect(() => setText(note.data.text), [note.data.text]);
-  useEffect(() => fit(area.current), [text]);
   const save = () => {
     const t = text.trim();
     if (!t) return setText(note.data.text);
@@ -44,7 +42,7 @@ function Sticky({ note, dash }: { note: Entry<"gratitude">; dash: Dashboard }) {
   };
   return (
     <li className={`gr-note sticky-${note.data.color}`} style={{ rotate: `${tilt(note.id)}deg` }} onMouseLeave={() => setConfirm(false)}>
-      <textarea ref={area} className="gr-text" value={text} rows={1} aria-label="Grateful for" onChange={e => setText(e.target.value)} onBlur={save} />
+      <textarea className="gr-text gr-scroll" value={text} aria-label="Grateful for" onChange={e => setText(e.target.value)} onBlur={save} />
       <div className="gr-foot">
         <time className="gr-time" dateTime={new Date(note.data.at).toISOString()}>{stamp(note.data.at)}</time>
         <span className="gr-tools">
