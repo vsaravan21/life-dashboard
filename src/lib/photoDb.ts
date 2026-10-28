@@ -31,7 +31,7 @@ const urls = new Map<string, string>();
 
 export async function savePhoto(blob: Blob) {
   // The extension marks videos (see lib/media); older photos have none.
-  const id = `${crypto.randomUUID()}.${extFor(blob.type)}`;
+  const id = `${crypto.randomUUID()}.${extFor(blob.type, (blob as File).name)}`;
   await run("readwrite", s => s.put(blob, id));
   return IDB_PREFIX + id;
 }

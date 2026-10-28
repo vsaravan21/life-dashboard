@@ -63,10 +63,9 @@ function Slide({ dash, photo, alt, lift }: { dash: Dashboard; photo: string; alt
 }
 
 /** A trip's photos and videos as swipeable slides, with arrows, dots and a way to add more. Drag a photo sideways to move it. */
-export function Slides({ trip, label, dash, notify }: { trip: Entry<"trips"> | Entry<"projects">; label: string; dash: Dashboard; notify: (m: string) => void }) {
+function Slides({ trip, label, dash, notify }: { trip: Entry<"trips">; label: string; dash: Dashboard; notify: (m: string) => void }) {
   const saved = trip.data.photos;
-  // Trips and projects both keep their slides in `photos`.
-  const setPhotos = (photos: string[]) => dash.patch(trip as Entry<"trips">, { photos });
+  const setPhotos = (photos: string[]) => dash.patch(trip, { photos });
   const [draft, setDraft] = useState<string[] | null>(null);
   const photos = draft ?? saved ?? [];
   const track = useRef<HTMLDivElement>(null);

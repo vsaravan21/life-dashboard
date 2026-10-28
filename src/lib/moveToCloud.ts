@@ -12,7 +12,9 @@ const stored = (r: string | undefined): r is string => !!r && r !== "none" && !i
 /** An entry's data without photo refs or links to other entries, to tell whether two entries are the same thing. */
 function fingerprint(e: Entry) {
   const d = { ...(e.data as unknown as Record<string, unknown>) };
-  delete d.photo; delete d.photos; delete d.inspo; delete d.listId;
+  delete d.photo; delete d.photos; delete d.listId;
+  // A project's cards hold file refs, which differ between browser and account; compare their words only.
+  if (e.kind === "projects" && Array.isArray(d.cards)) d.cards = (d.cards as { title: string; text: string }[]).map(c => [c.title, c.text]);
   if (e.kind === "books" && typeof d.cover === "string" && !isWeb(d.cover)) delete d.cover;
   return `${e.kind}:${JSON.stringify(d, Object.keys(d).sort())}`;
 }
@@ -28,12 +30,13 @@ export async function moveToCloud(local: Store, cloud: Store, cloudEntries: Entr
   const ids = new Map<string, string>();
   const result: MoveResult = { moved: 0, skipped: 0, photos: 0 };
 
-  const copyPhoto = async (ref: string) => {
+  const copyPhoto = async (ref: string, name?: string) => {
     const url = await local.photoUrl(ref);
     if (!url) return null;
     const blob = await (await fetch(url)).blob();
     result.photos++;
-    return cloud.uploadPhoto(blob);
+    // Keep a file's name so it's stored with the right extension.
+    return cloud.uploadPhoto(name ? new File([blob], name, { type: blob.type }) : blob);
   };
 
   for (const [i, e] of order.entries()) {
@@ -44,9 +47,13 @@ export async function moveToCloud(local: Store, cloud: Store, cloudEntries: Entr
     } else {
       const data = structuredClone(e.data) as unknown as Record<string, unknown>;
       if (e.kind === "journal" && stored(data.photo as string)) data.photo = (await copyPhoto(data.photo as string)) ?? undefined;
-      for (const key of ["photos", "inspo"])
-        if ((e.kind === "trips" || e.kind === "projects") && Array.isArray(data[key]))
-          data[key] = (await Promise.all((data[key] as string[]).map(p => (stored(p) ? copyPhoto(p) : p)))).filter(Boolean);
+      if (e.kind === "trips" && Array.isArray(data.photos))
+        data.photos = (await Promise.all((data.photos as string[]).map(p => (stored(p) ? copyPhoto(p) : p)))).filter(Boolean);
+      if (e.kind === "projects" && Array.isArray(data.cards))
+        for (const c of data.cards as DataByKind["projects"]["cards"]) {
+          c.media = (await Promise.all(c.media.map(p => (stored(p) ? copyPhoto(p) : p)))).filter((p): p is string => !!p);
+          for (const f of c.files) if (stored(f.ref)) f.ref = (await copyPhoto(f.ref, f.name)) ?? f.ref;
+        }
       if (e.kind === "books" && stored(data.cover as string)) data.cover = (await copyPhoto(data.cover as string)) ?? "";
       if (e.kind === "todos" && typeof data.listId === "string") data.listId = ids.get(data.listId) ?? data.listId;
       const added = await cloud.add(e.kind as Kind, data as unknown as DataByKind[Kind]);

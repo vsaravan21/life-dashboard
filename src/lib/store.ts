@@ -29,7 +29,7 @@ const DEFAULT_PREFS: Prefs = { currency: "USD" };
 const photosOf = (entry: Entry): string[] =>
   entry.kind === "journal" ? [(entry.data as DataByKind["journal"]).photo].filter((p): p is string => !!p)
     : entry.kind === "trips" ? (entry.data as DataByKind["trips"]).photos ?? []
-    : entry.kind === "projects" ? [...((entry.data as DataByKind["projects"]).photos ?? []), ...((entry.data as DataByKind["projects"]).inspo ?? [])]
+    : entry.kind === "projects" ? ((entry.data as DataByKind["projects"]).cards ?? []).flatMap(c => [...c.media, ...c.files.map(f => f.ref)])
     : entry.kind === "books" ? [(entry.data as DataByKind["books"]).cover].filter((c): c is string => !!c && c !== "none" && !/^https?:/.test(c))
     : [];
 
@@ -78,8 +78,8 @@ export function cloudStore(client: SupabaseClient, userId: string): Store {
       if (error) throw error;
     },
     async uploadPhoto(file) {
-      const path = `${userId}/${crypto.randomUUID()}.${extFor(file.type)}`;
-      const { error } = await client.storage.from("journal").upload(path, file, { contentType: file.type || "image/jpeg" });
+      const path = `${userId}/${crypto.randomUUID()}.${extFor(file.type, (file as File).name)}`;
+      const { error } = await client.storage.from("journal").upload(path, file, { contentType: file.type || "application/octet-stream" });
       if (error) throw error;
       return path;
     },

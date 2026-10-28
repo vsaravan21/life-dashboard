@@ -11,4 +11,11 @@ describe("media refs", () => {
     expect(isVideoRef("idb:abc")).toBe(false);
     expect(isVideoRef("u1/abc.jpg")).toBe(false);
   });
+
+  it("keeps a document's own extension", () => {
+    expect(extFor("application/pdf", "Budget Plan.PDF")).toBe("pdf");
+    expect(extFor("", "notes.final.docx")).toBe("docx");
+    expect(extFor("application/octet-stream", "README")).toBe("bin");
+    expect(extFor("image/png", "x.png")).toBe("png");
+  });
 });

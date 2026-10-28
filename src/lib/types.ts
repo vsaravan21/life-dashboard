@@ -44,20 +44,18 @@ export interface FlightData { date: string; from: string; to: string; reason?: s
 export interface BookData { title: string; author?: string; status: "reading" | "want" | "done"; progress: number; finished?: string; cover?: string; thoughts?: string }
 export interface JournalData { caption: string; date: string; photo?: string }
 export interface WinData { title: string; date: string; note?: string }
-/** A checklist line in a project: a milestone, next step, skill or wishlist item. */
-export interface ProjectItem { id: string; text: string; done: boolean }
-export type ProjectSection = "milestones" | "tasks" | "updates" | "links" | "practice" | "skills" | "wishlist" | "inspo" | "notes" | "photos";
-/** One tab on Projects & Hobbies. Sections are turned on per tab, so each one shows only what it needs. */
+/** A card inside a project: a title, some text, photos or videos, and files. */
+export interface ProjectCard {
+  id: string; title: string; text: string;
+  media: string[];
+  files: { ref: string; name: string; size: number; type: string }[];
+}
+/** One tab on the Projects page. */
 export interface ProjectData {
-  name: string; emoji: string; color: string; type: "project" | "hobby";
+  name: string; color: string;
   status: "idea" | "active" | "paused" | "done";
-  why?: string; start?: string; target?: string;
-  sections: ProjectSection[];
-  notes?: string; photos?: string[]; inspo?: string[];
-  milestones?: ProjectItem[]; tasks?: ProjectItem[]; skills?: ProjectItem[]; wishlist?: ProjectItem[];
-  updates?: { id: string; date: string; text: string }[];
-  links?: { id: string; label: string; url: string }[];
-  practice?: { id: string; date: string; minutes: number; note?: string }[];
+  start?: string; end?: string;
+  cards: ProjectCard[];
 }
 
 /** A sticky note on the Gratitude Board. `at` is when it was written, in ms. */
