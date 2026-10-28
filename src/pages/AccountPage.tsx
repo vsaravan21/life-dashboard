@@ -77,7 +77,7 @@ export function AccountPage({ dash, sync }: { dash: Dashboard; sync: { email: st
 
   if (!sync) return (
     <PageShell path="/account">
-      <SignInCard title="Back up and sync" sub="Sign in to save everything to your account, so it's backed up and shows up on every device you sign in on. It's the same email and password as Finance." />
+      <SignInCard title="Back up and sync" sub="" />
       <section className="glass acct-card">
         <span className="label">Right now</span>
         <p className="sub">Your {plural(n, "thing")} {n === 1 ? "is" : "are"} saved only in this browser. Clearing your browsing data or switching devices would lose {n === 1 ? "it" : "them"}.</p>

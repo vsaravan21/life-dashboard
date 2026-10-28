@@ -48,7 +48,7 @@ export function SignInCard({ title = "Finance is private", sub = "Sign in to see
         <p className="sub">Check <b>{email}</b> for a sign-in link. Open it on this device and you'll land back here.</p>
       ) : (
         <>
-          <p className="sub">{sub}</p>
+          {sub && <p className="sub">{sub}</p>}
           <form className="fin-signin" onSubmit={submit}>
             <input type="email" required autoComplete="email" placeholder="Your email" aria-label="Email" value={email} onChange={e => setEmail(e.target.value)} />
             {mode === "password" && (
