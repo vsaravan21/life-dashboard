@@ -8,7 +8,7 @@ import type { Dashboard } from "../lib/useDashboard";
 function Photo({ dash, entry }: { dash: Dashboard; entry: Entry<"journal"> }) {
   const [src, setSrc] = useState<string | null>(null);
   const [broken, setBroken] = useState(false);
-  const ref = entry.data.photo;
+  const ref = entry.data.photos?.[0] ?? entry.data.photo;
   useEffect(() => {
     let live = true;
     if (ref) dash.store.photoUrl(ref).then(u => live && setSrc(u));
@@ -37,7 +37,7 @@ export function Journal({ dash, notify }: { dash: Dashboard; notify: (m: string)
             try { photo = await dash.store.uploadPhoto(await shrinkPhoto(file)); }
             catch { notify("The photo didn't upload. Try again."); return false; }
           }
-          await dash.add("journal", { caption: v.caption.trim(), date: v.date, ...(photo ? { photo } : {}) });
+          await dash.add("journal", { caption: v.caption.trim(), date: v.date, photos: photo ? [photo] : [] });
         }}>
           <input className="grow" name="caption" placeholder="Caption" required aria-label="Caption" />
           <DateField name="date" label="Date" />

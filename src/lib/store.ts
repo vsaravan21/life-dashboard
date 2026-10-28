@@ -27,7 +27,7 @@ const DEFAULT_PREFS: Prefs = { currency: "USD" };
 
 /** Every photo an entry holds: a journal moment's photo, a trip's slides, or a book cover you added. */
 const photosOf = (entry: Entry): string[] =>
-  entry.kind === "journal" ? [(entry.data as DataByKind["journal"]).photo].filter((p): p is string => !!p)
+  entry.kind === "journal" ? [(entry.data as DataByKind["journal"]).photo, ...((entry.data as DataByKind["journal"]).photos ?? [])].filter((p): p is string => !!p)
     : entry.kind === "trips" ? (entry.data as DataByKind["trips"]).photos ?? []
     : entry.kind === "projects" ? ((entry.data as DataByKind["projects"]).cards ?? []).flatMap(c => [...c.media, ...c.files.map(f => f.ref)])
     : entry.kind === "books" ? [(entry.data as DataByKind["books"]).cover].filter((c): c is string => !!c && c !== "none" && !/^https?:/.test(c))

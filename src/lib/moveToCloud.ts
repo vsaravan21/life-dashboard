@@ -12,7 +12,7 @@ const stored = (r: string | undefined): r is string => !!r && r !== "none" && !i
 /** An entry's data without photo refs or links to other entries, to tell whether two entries are the same thing. */
 function fingerprint(e: Entry) {
   const d = { ...(e.data as unknown as Record<string, unknown>) };
-  delete d.photo; delete d.photos; delete d.listId;
+  delete d.photo; delete d.photos; delete d.notes; delete d.listId;
   // A project's cards hold file refs, which differ between browser and account; compare their words only.
   if (e.kind === "projects" && Array.isArray(d.cards)) d.cards = (d.cards as { title: string; text: string }[]).map(c => [c.title, c.text]);
   if (e.kind === "books" && typeof d.cover === "string" && !isWeb(d.cover)) delete d.cover;
@@ -47,8 +47,18 @@ export async function moveToCloud(local: Store, cloud: Store, cloudEntries: Entr
     } else {
       const data = structuredClone(e.data) as unknown as Record<string, unknown>;
       if (e.kind === "journal" && stored(data.photo as string)) data.photo = (await copyPhoto(data.photo as string)) ?? undefined;
-      if (e.kind === "trips" && Array.isArray(data.photos))
-        data.photos = (await Promise.all((data.photos as string[]).map(p => (stored(p) ? copyPhoto(p) : p)))).filter(Boolean);
+      // Photo lists move one by one, and each photo's note follows it to its new ref.
+      if ((e.kind === "trips" || e.kind === "journal") && Array.isArray(data.photos)) {
+        const notes = (data.notes ?? {}) as Record<string, string>, moved: Record<string, string> = {}, list: string[] = [];
+        for (const p of data.photos as string[]) {
+          const to = stored(p) ? await copyPhoto(p) : p;
+          if (!to) continue;
+          list.push(to);
+          if (notes[p]) moved[to] = notes[p];
+        }
+        data.photos = list;
+        data.notes = moved;
+      }
       if (e.kind === "projects" && Array.isArray(data.cards))
         for (const c of data.cards as DataByKind["projects"]["cards"]) {
           c.media = (await Promise.all(c.media.map(p => (stored(p) ? copyPhoto(p) : p)))).filter((p): p is string => !!p);

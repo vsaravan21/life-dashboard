@@ -31,6 +31,8 @@ export interface TripData {
   place: string; start: string; end: string; note?: string;
   /** Card color on the Travel page, and the trip's photo slides (store refs) in order. */
   color?: string; photos?: string[];
+  /** A short note on each photo, by its ref. */
+  notes?: Record<string, string>;
 }
 /**
  * A flight on the Travel page. `date` is "YYYY-MM-DD", or "YYYY-MM" when only the month is known.
@@ -42,7 +44,15 @@ export interface FlightData { date: string; from: string; to: string; reason?: s
  * `cover` is an image URL or a stored photo ref; "none" means no cover was found to look up again.
  */
 export interface BookData { title: string; author?: string; status: "reading" | "want" | "done"; progress: number; finished?: string; cover?: string; thoughts?: string }
-export interface JournalData { caption: string; date: string; photo?: string }
+/**
+ * A highlight in the Photo journal: a title (caption), a date and its photos.
+ * Older entries hold a single `photo`; newer ones keep a list in `photos`.
+ */
+export interface JournalData {
+  caption: string; date: string; photo?: string;
+  photos?: string[]; note?: string; color?: string;
+  notes?: Record<string, string>;
+}
 export interface WinData { title: string; date: string; note?: string }
 /** A card inside a project: a title, some text, photos or videos, and files. */
 export interface ProjectCard {

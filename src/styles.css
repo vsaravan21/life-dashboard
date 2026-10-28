@@ -734,3 +734,22 @@ button.linkish:hover { color: var(--accent); }
   .pc-wall { columns: 1; }
   .pj-head.cover { padding: 16px; }
 }
+
+/* Hover notes: one per photo (rises from the bottom of the slide) and one per card (drops from its cover) */
+.tr-cap { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; padding: 34px 14px 12px; background: linear-gradient(to top, rgba(20,14,26,.72), rgba(20,14,26,.38) 60%, transparent);
+  opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; }
+.tr-slide:has(video) .tr-cap { top: 0; bottom: auto; padding: 12px 14px 34px; background: linear-gradient(to bottom, rgba(20,14,26,.72), rgba(20,14,26,.38) 60%, transparent); transform: translateY(-8px); }
+.tr-slide:hover .tr-cap, .tr-cap:focus-within, .tr-cap.editing { opacity: 1; transform: none; }
+@media (hover: none) { .tr-cap.has { opacity: 1; transform: none; } }
+.tr-cap-text { all: unset; display: block; width: 100%; color: #fff; font-size: 13.5px; line-height: 1.45; cursor: text; white-space: pre-wrap; text-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.tr-cap:not(.has) .tr-cap-text { display: inline-block; width: auto; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.22); backdrop-filter: blur(6px); cursor: pointer; }
+.tr-cap-text:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 6px; }
+.tr-cap-input { width: 100%; resize: none; font: inherit; font-size: 13.5px; line-height: 1.45; color: #fff; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.5); border-radius: 10px; padding: 6px 9px; outline: none; }
+.tr-cap-input::placeholder { color: rgba(255,255,255,.75); }
+.tl-head-wrap { position: relative; }
+.tl-note-pop { position: absolute; left: 10px; right: 10px; top: calc(100% - 10px); z-index: 4; padding: 12px 14px; border-radius: 18px; background: var(--solid); color: var(--ink);
+  font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; box-shadow: 0 16px 30px -14px rgba(60,40,70,.55); pointer-events: none;
+  opacity: 0; transform: translateY(-6px); transition: opacity .2s, transform .2s; }
+.tl-head-wrap.has-note:hover .tl-note-pop { opacity: 1; transform: none; }
+.tl-note-mark { margin-left: 6px; vertical-align: -2px; color: var(--accent); }
+.tl-note-input { width: 100%; resize: vertical; font: inherit; font-size: 13.5px; line-height: 1.5; color: var(--ink); border: 0; border-radius: 14px; background: var(--solid); padding: 9px 12px; }
