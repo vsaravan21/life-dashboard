@@ -27,6 +27,7 @@ import { LookingBack } from "./sections/LookingBack";
 import { Notes } from "./sections/Notes";
 import { Reading } from "./sections/Reading";
 import { Todos } from "./sections/Todos";
+import { UpNext } from "./sections/UpNext";
 import { Travel } from "./sections/Travel";
 
 const NAME = "Varsha";
@@ -95,6 +96,7 @@ function DashboardView({ store, onSignOut, sync }: { store: Store; onSignOut?: (
     <>
       <div className="hero"><Greeting /><Summary dash={dash} /></div>
       <div className="grid">
+        <UpNext dash={dash} notify={notify} />
         <Calendar dash={dash} />
         <Todos dash={dash} />
         <LookingBack dash={dash} />

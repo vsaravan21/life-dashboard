@@ -46,7 +46,7 @@ export async function moveToCloud(local: Store, cloud: Store, cloudEntries: Entr
       result.skipped++;
     } else {
       const data = structuredClone(e.data) as unknown as Record<string, unknown>;
-      if (e.kind === "journal" && stored(data.photo as string)) data.photo = (await copyPhoto(data.photo as string)) ?? undefined;
+      if ((e.kind === "journal" || e.kind === "upnext") && stored(data.photo as string)) data.photo = (await copyPhoto(data.photo as string)) ?? undefined;
       // Photo lists move one by one, and each photo's note follows it to its new ref.
       if ((e.kind === "trips" || e.kind === "journal") && Array.isArray(data.photos)) {
         const notes = (data.notes ?? {}) as Record<string, string>, moved: Record<string, string> = {}, list: string[] = [];

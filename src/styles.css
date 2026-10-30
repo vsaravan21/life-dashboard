@@ -759,3 +759,42 @@ button.linkish:hover { color: var(--accent); }
 @keyframes shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 @media (prefers-reduced-motion: reduce) { .tr-loading { animation: none; } }
 .pc-fail { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12.5px; }
+
+/* Up next: big trips coming up, as countdown tiles on the home page */
+@media (min-width: 760px) { #p-upnext { grid-column: 1 / -1; } }
+.un-more { border: 0; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; margin-left: auto; }
+.un-tiles { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 640px) { .un-tiles.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.un-tile.cover { position: relative; height: auto; min-height: 168px; border-radius: 24px; padding: 18px 20px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.un-tile.big { min-height: 210px; }
+.un-tile > * { position: relative; z-index: 1; }
+.un-photo { position: absolute !important; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0 !important; }
+.un-tile.has-photo::after { content: ""; position: absolute; inset: 0; z-index: 0; background: linear-gradient(to top, rgba(20,14,26,.66), rgba(20,14,26,.12) 70%); }
+.un-tile.has-photo { color: #fff; }
+.un-count { display: flex; flex-direction: column; line-height: 1; order: 2; text-align: right; }
+.un-count b { font-size: 58px; font-weight: 600; letter-spacing: -.04em; }
+.un-tile.big .un-count b { font-size: 78px; }
+.un-count b.loose { font-size: 26px; letter-spacing: -.01em; line-height: 1.1; }
+.un-tile.big .un-count b.loose { font-size: 32px; }
+.un-count span { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; opacity: .7; margin-top: 6px; }
+.un-info { min-width: 0; display: grid; gap: 4px; flex: 1 1 180px; }
+.un-info h3 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+.un-tile.big .un-info h3 { font-size: 28px; }
+.un-info p { margin: 0; font-size: 13px; opacity: .78; }
+.un-booked { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.un-booked button { display: inline-flex; align-items: center; gap: 4px; border: 0; border-radius: 999px; padding: 4px 10px; font: inherit; font-size: 11.5px; font-weight: 600;
+  background: rgba(255,255,255,.55); color: var(--ink); cursor: pointer; backdrop-filter: blur(6px); }
+.un-booked button.on { background: var(--accent); color: #fff; }
+.un-edit { position: absolute !important; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; border: 0; display: grid; place-items: center; background: rgba(255,255,255,.7); color: var(--ink); cursor: pointer; opacity: 0; transition: opacity .15s; }
+.un-tile:hover .un-edit, .un-edit:focus-visible { opacity: 1; }
+@media (hover: none) { .un-edit { opacity: 1; } }
+.un-empty { all: unset; box-sizing: border-box; display: grid; justify-items: center; gap: 4px; padding: 30px 16px; border: 2px dashed rgba(123,118,130,.35); border-radius: 24px; text-align: center; cursor: pointer; }
+.un-empty:hover { border-color: var(--accent); }
+.un-empty b { font-size: 18px; font-weight: 600; }
+.un-plus { margin-top: 8px; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 20px; }
+.un-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.un-form .grow { flex: 1 1 100%; }
+.un-dates { display: flex; flex-wrap: wrap; gap: 8px; }
+.un-dates label { display: inline-flex; align-items: center; gap: 6px; }
+.un-photo-row { display: flex; flex-wrap: wrap; gap: 6px; flex-basis: 100%; }
+.un-form .acts { flex-basis: 100%; display: flex; gap: 8px; }

@@ -1,4 +1,4 @@
-export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "journal", "wins", "notes", "lists", "goalyears", "goalcats", "lookback", "flights", "gratitude", "projects"] as const;
+export const KINDS = ["events", "todos", "money", "goals", "trips", "books", "journal", "wins", "notes", "lists", "goalyears", "goalcats", "lookback", "flights", "gratitude", "projects", "upnext"] as const;
 export type Kind = (typeof KINDS)[number];
 
 /** Dates are local calendar days as "YYYY-MM-DD"; times are "HH:MM". */
@@ -70,6 +70,13 @@ export interface ProjectData {
   cards: ProjectCard[];
 }
 
+/** A big trip coming up, shown only in the home page's "Up next" card. With no start date it's still a dream, and `when` says roughly when. */
+export interface UpNextData {
+  place: string; sub?: string; start?: string; end?: string; when?: string;
+  color: string; photo?: string;
+  booked?: { flights?: boolean; stay?: boolean; timeoff?: boolean };
+}
+
 /** A sticky note on the Gratitude Board. `at` is when it was written, in ms. */
 export interface GratitudeData { text: string; color: string; at: number }
 
@@ -92,6 +99,7 @@ export interface DataByKind {
   flights: FlightData;
   gratitude: GratitudeData;
   projects: ProjectData;
+  upnext: UpNextData;
 }
 
 export interface Entry<K extends Kind = Kind> {

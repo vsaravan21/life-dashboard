@@ -30,6 +30,7 @@ const photosOf = (entry: Entry): string[] =>
   entry.kind === "journal" ? [(entry.data as DataByKind["journal"]).photo, ...((entry.data as DataByKind["journal"]).photos ?? [])].filter((p): p is string => !!p)
     : entry.kind === "trips" ? (entry.data as DataByKind["trips"]).photos ?? []
     : entry.kind === "projects" ? ((entry.data as DataByKind["projects"]).cards ?? []).flatMap(c => [...c.media, ...c.files.map(f => f.ref)])
+    : entry.kind === "upnext" ? [(entry.data as DataByKind["upnext"]).photo].filter((p): p is string => !!p)
     : entry.kind === "books" ? [(entry.data as DataByKind["books"]).cover].filter((c): c is string => !!c && c !== "none" && !/^https?:/.test(c))
     : [];
 
