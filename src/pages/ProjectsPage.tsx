@@ -102,7 +102,7 @@ function Card({ card, dash, notify, onChange, onDelete, onOpen }: {
       <textarea ref={area} className="pc-text" rows={2} value={text} placeholder="Write something…" aria-label="Card text"
         onChange={e => setText(e.target.value)} onBlur={() => text !== card.text && onChange({ text })} />
       {card.media.length > 0 && (
-        <ul className={"pc-grid n" + Math.min(card.media.length, 3)}>
+        <ul className="pc-grid">
           {card.media.map(m => <Media key={m} dash={dash} photo={m} onOpen={onOpen} onRemove={() => { onChange({ media: card.media.filter(x => x !== m) }); forget(m); }} />)}
         </ul>
       )}
