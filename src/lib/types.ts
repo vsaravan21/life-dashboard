@@ -65,6 +65,8 @@ export interface ProjectData {
   name: string; color: string;
   status: "idea" | "active" | "paused" | "done";
   start?: string; end?: string;
+  /** Hobbies and other open-ended projects can hide their status or dates. */
+  hideStatus?: boolean; hideDates?: boolean;
   cards: ProjectCard[];
 }
 

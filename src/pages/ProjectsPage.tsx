@@ -144,13 +144,19 @@ function ProjectView({ project, dash, notify, onDeleted }: { project: Project; d
         <div className="pj-heading">
           <input className="pj-name" value={name} aria-label="Project name" onChange={e => setName(e.target.value)}
             onBlur={() => { const n = name.trim() || d.name; setName(n); if (n !== d.name) dash.patch(project, { name: n }); }} onKeyDown={e => e.key === "Enter" && e.currentTarget.blur()} />
-          <div className="pj-meta">
-            <select className={"pj-status s-" + d.status} value={d.status} aria-label="Status" onChange={e => dash.patch(project, { status: e.target.value as ProjectData["status"] })}>
-              {Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
-            <label className="pj-date">Start<input type="date" value={d.start ?? ""} onChange={e => dash.patch(project, { start: e.target.value })} /></label>
-            <label className="pj-date">End<input type="date" value={d.end ?? ""} min={d.start} onChange={e => dash.patch(project, { end: e.target.value })} /></label>
-          </div>
+          {!(d.hideStatus && d.hideDates) && (
+            <div className="pj-meta">
+              {!d.hideStatus && (
+                <select className={"pj-status s-" + d.status} value={d.status} aria-label="Status" onChange={e => dash.patch(project, { status: e.target.value as ProjectData["status"] })}>
+                  {Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              )}
+              {!d.hideDates && <>
+                <label className="pj-date">Start<input type="date" value={d.start ?? ""} onChange={e => dash.patch(project, { start: e.target.value })} /></label>
+                <label className="pj-date">End<input type="date" value={d.end ?? ""} min={d.start} onChange={e => dash.patch(project, { end: e.target.value })} /></label>
+              </>}
+            </div>
+          )}
         </div>
         <button className="tl-menu-btn" aria-label="Project options" aria-expanded={menu} onClick={() => { setMenu(m => !m); setConfirm(false); }}>
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><circle cx="12" cy="5" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="12" cy="19" r="1.8" /></svg>
@@ -158,6 +164,9 @@ function ProjectView({ project, dash, notify, onDeleted }: { project: Project; d
       </header>
       {menu && (
         <div className="tl-menu pj-menu glass">
+          <span className="label">Show</span>
+          <label className="pj-toggle"><input type="checkbox" checked={!d.hideStatus} onChange={e => dash.patch(project, { hideStatus: !e.target.checked })} /> Status</label>
+          <label className="pj-toggle"><input type="checkbox" checked={!d.hideDates} onChange={e => dash.patch(project, { hideDates: !e.target.checked })} /> Dates</label>
           <span className="label">Color</span>
           <Swatches value={d.color} onChange={color => dash.patch(project, { color })} />
           <button className={"btn sm" + (confirm ? " danger" : "")} onClick={() => (confirm ? (dash.remove(project), onDeleted()) : setConfirm(true))}>
@@ -214,7 +223,7 @@ export function ProjectsPage({ dash, notify }: { dash: Dashboard; notify: (m: st
         <div className="seg pj-tabs" role="tablist" aria-label="Projects">
           {all.map(p => (
             <button key={p.id} role="tab" aria-selected={!making && current?.id === p.id} className={!making && current?.id === p.id ? "on" : ""} onClick={() => setSel(p.id)}>
-              <span className={"pj-dot s-" + p.data.status} title={STATUS[p.data.status]} aria-hidden="true" />{p.data.name}
+              {!p.data.hideStatus && <span className={"pj-dot s-" + p.data.status} title={STATUS[p.data.status]} aria-hidden="true" />}{p.data.name}
             </button>
           ))}
         </div>
