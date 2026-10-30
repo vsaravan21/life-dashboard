@@ -1,23 +1,17 @@
-import { useEffect, useState } from "react";
 import { AddForm, DateField, Empty, Panel, Remove } from "../components/ui";
 import { fmt } from "../lib/dates";
 import { shrinkPhoto } from "../lib/image";
 import type { Entry } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
+import { useStoredUrl } from "../lib/useStoredUrl";
 
 function Photo({ dash, entry }: { dash: Dashboard; entry: Entry<"journal"> }) {
-  const [src, setSrc] = useState<string | null>(null);
-  const [broken, setBroken] = useState(false);
   const ref = entry.data.photos?.[0] ?? entry.data.photo;
-  useEffect(() => {
-    let live = true;
-    if (ref) dash.store.photoUrl(ref).then(u => live && setSrc(u));
-    return () => { live = false; };
-  }, [dash.store, ref]);
+  const { src, onError, failed: broken, attempt } = useStoredUrl(dash.store, ref);
   return (
     <div className="img">
       {ref && src && !broken
-        ? <img src={src} alt={entry.data.caption} loading="lazy" onError={() => setBroken(true)} />
+        ? <img key={attempt} src={src} alt={entry.data.caption} loading="lazy" decoding="async" onError={onError} />
         : ref && broken ? "photo unavailable" : fmt(entry.data.date, { month: "short", day: "numeric" })}
     </div>
   );

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, 
 import { shrinkPhoto } from "../lib/image";
 import { isVideoFile, isVideoRef, MAX_VIDEO_MB } from "../lib/media";
 import type { Dashboard } from "../lib/useDashboard";
+import { useStoredUrl } from "../lib/useStoredUrl";
 
 /** At most this many dots show; with more photos, the row slides along with the one you're on. */
 const MAX_DOTS = 7;
@@ -17,16 +18,6 @@ function dotEdge(total: number, at: number, n: number) {
   return (n === w[0] && n > 0) || (n === w[w.length - 1] && n < total - 1);
 }
 
-/** A stored photo's or video's displayable URL, once it's ready. */
-function useMediaUrl(dash: Dashboard, ref: string) {
-  const [src, setSrc] = useState<string | null>(null);
-  useEffect(() => {
-    let live = true;
-    dash.store.photoUrl(ref).then(u => live && setSrc(u));
-    return () => { live = false; };
-  }, [dash.store, ref]);
-  return src;
-}
 
 /** A photo's note: hidden until you hover the photo, then it rises from the bottom. Click it to write or change it. */
 function PhotoNote({ text, onSave }: { text: string; onSave: (t: string) => void }) {
@@ -47,14 +38,16 @@ function PhotoNote({ text, onSave }: { text: string; onSave: (t: string) => void
   );
 }
 
-function Slide({ dash, photo, alt, lift, note, onNote }: { dash: Dashboard; photo: string; alt: string; lift?: number; note: string; onNote: (t: string) => void }) {
-  const src = useMediaUrl(dash, photo);
+function Slide({ dash, photo, alt, lift, note, onNote, near }: { dash: Dashboard; photo: string; alt: string; lift?: number; note: string; onNote: (t: string) => void; near: boolean }) {
+  const { src, onError, failed, attempt } = useStoredUrl(dash.store, photo);
   return (
     <div className={"tr-slide" + (lift !== undefined ? " lifted" : "")} style={lift !== undefined ? { transform: `translateX(${lift}px) scale(.93)` } : undefined}>
-      {!src ? <span className="sub">Loading…</span>
-        : isVideoRef(photo) ? <video src={src} controls playsInline preload="metadata" aria-label={alt} />
-        : <img src={src} alt={alt} loading="lazy" draggable={false} />}
-      {src && <PhotoNote text={note} onSave={onNote} />}
+      {failed ? <span className="sub">Couldn't load this one</span>
+        : !src ? <span className="tr-loading" aria-label="Loading" />
+        : isVideoRef(photo) ? <video key={attempt} src={src} controls playsInline preload="metadata" aria-label={alt} onError={onError} />
+        // The photo on screen and its neighbors load right away; the rest wait until you get close.
+        : <img key={attempt} src={src} alt={alt} loading={near ? "eager" : "lazy"} decoding="async" draggable={false} onError={onError} />}
+      {src && !failed && <PhotoNote text={note} onSave={onNote} />}
     </div>
   );
 }
@@ -202,7 +195,7 @@ export function Slides({ photos: saved, setPhotos, notes, setNote, label, dash, 
         aria-label={photos.length > 1 ? "Drag a photo sideways to move it, or press Shift and an arrow key" : undefined}>
         {photos.map((p, n) => (
           <Slide key={p} dash={dash} photo={p} alt={`${label}, ${isVideoRef(p) ? "video" : "photo"} ${n + 1} of ${photos.length}`}
-            lift={lift?.ref === p ? lift.dx : undefined} note={notes?.[p] ?? ""} onNote={t => setNote(p, t)} />
+            lift={lift?.ref === p ? lift.dx : undefined} note={notes?.[p] ?? ""} onNote={t => setNote(p, t)} near={Math.abs(n - i) <= 1} />
         ))}
       </div>
       {lift && <span className="tr-moving" aria-live="polite">Moving to {i + 1} of {photos.length}</span>}

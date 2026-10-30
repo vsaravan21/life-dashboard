@@ -17,8 +17,8 @@ export interface Store {
   setPrefs(prefs: Prefs): Promise<void>;
   /** Store a photo (or a trip video) and return the reference to keep in an entry. */
   uploadPhoto(file: Blob): Promise<string>;
-  /** A displayable URL for a stored photo reference. */
-  photoUrl(ref: string): Promise<string | null>;
+  /** A displayable URL for a stored photo reference. `fresh` skips any saved link, for when one stopped working. */
+  photoUrl(ref: string, fresh?: boolean): Promise<string | null>;
   /** Delete a stored photo (entries removed with `remove` take their photos with them). */
   removePhoto(ref: string): Promise<void>;
 }
@@ -46,8 +46,41 @@ export const supabase: SupabaseClient | null = signInOn && url && anonKey ? crea
 type Row = { id: string; kind: Kind; data: Entry["data"]; created_at: string };
 const toEntry = (r: Row): Entry => ({ id: r.id, kind: r.kind, data: r.data, createdAt: r.created_at });
 
+/** Signed photo links last a week and are kept in this browser, so a photo keeps the same link and the browser's cache can serve it. */
+const SIGN_SECONDS = 7 * 24 * 3600;
+const DAY = 24 * 3600_000;
+
 export function cloudStore(client: SupabaseClient, userId: string): Store {
+  const cacheKey = `life-dashboard:links:${userId}`;
   const urlCache = new Map<string, { url: string; expires: number }>();
+  try {
+    for (const [ref, v] of Object.entries(JSON.parse(localStorage.getItem(cacheKey) ?? "{}") as Record<string, { url: string; expires: number }>))
+      if (v.expires > Date.now() + DAY) urlCache.set(ref, v);
+  } catch { /* no saved links */ }
+  const keep = () => { try { localStorage.setItem(cacheKey, JSON.stringify(Object.fromEntries(urlCache))); } catch { /* storage full or blocked: links just aren't kept */ } };
+
+  // Photos asked for in the same moment are signed together in one request, instead of one request each.
+  let waiting = new Map<string, ((url: string | null) => void)[]>();
+  let timer: ReturnType<typeof setTimeout> | 0 = 0;
+  const signAll = async () => {
+    const batch = waiting;
+    waiting = new Map();
+    timer = 0;
+    const refs = [...batch.keys()];
+    for (let i = 0; i < refs.length; i += 100) {
+      const part = refs.slice(i, i + 100);
+      // A failed request answers "no link" for its photos; each one asks again shortly.
+      const { data, error } = await client.storage.from("journal").createSignedUrls(part, SIGN_SECONDS)
+        .catch(e => ({ data: null, error: e as Error }));
+      const found = new Map((error ? [] : data ?? []).filter(d => d.signedUrl && !d.error).map(d => [d.path, d.signedUrl]));
+      for (const ref of part) {
+        const url = found.get(ref) ?? null;
+        if (url) urlCache.set(ref, { url, expires: Date.now() + SIGN_SECONDS * 1000 });
+        for (const done of batch.get(ref) ?? []) done(url);
+      }
+    }
+    keep();
+  };
   return {
     mode: "cloud",
     async load() {
@@ -79,17 +112,18 @@ export function cloudStore(client: SupabaseClient, userId: string): Store {
     },
     async uploadPhoto(file) {
       const path = `${userId}/${crypto.randomUUID()}.${extFor(file.type, (file as File).name)}`;
-      const { error } = await client.storage.from("journal").upload(path, file, { contentType: file.type || "application/octet-stream" });
+      // A stored file never changes (each upload gets a new name), so browsers may keep it for a year.
+      const { error } = await client.storage.from("journal").upload(path, file, { contentType: file.type || "application/octet-stream", cacheControl: "31536000" });
       if (error) throw error;
       return path;
     },
-    async photoUrl(ref) {
+    async photoUrl(ref, fresh) {
       const hit = urlCache.get(ref);
-      if (hit && hit.expires > Date.now()) return hit.url;
-      const { data, error } = await client.storage.from("journal").createSignedUrl(ref, 3600);
-      if (error || !data) return null;
-      urlCache.set(ref, { url: data.signedUrl, expires: Date.now() + 50 * 60_000 });
-      return data.signedUrl;
+      if (hit && !fresh && hit.expires > Date.now() + DAY) return hit.url;
+      return new Promise(resolve => {
+        waiting.set(ref, [...(waiting.get(ref) ?? []), resolve]);
+        timer ||= setTimeout(() => void signAll(), 15);
+      });
     },
     async removePhoto(ref) {
       await client.storage.from("journal").remove([ref]);

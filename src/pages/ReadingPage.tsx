@@ -6,6 +6,7 @@ import { today } from "../lib/dates";
 import { shrinkPhoto } from "../lib/image";
 import type { BookData, Entry } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
+import { useStoredUrl } from "../lib/useStoredUrl";
 import { LIST_COLORS, colorOf } from "./TodoPage";
 import { PageShell } from "./PageShell";
 
@@ -16,17 +17,13 @@ const yearOf = (b: BookData) => (b.finished || "").slice(0, 4);
 
 function Cover({ book, dash }: { book: Entry<"books">; dash: Dashboard }) {
   const c = book.data.cover;
-  const [src, setSrc] = useState<string | null>(c && isWebCover(c) ? c : null);
+  const web = !!c && isWebCover(c);
+  // A cover you added is stored like a photo; one found online is loaded straight from its address.
+  const stored = useStoredUrl(dash.store, c && c !== NO_COVER && !web ? c : null);
   const [broken, setBroken] = useState(false);
-  useEffect(() => {
-    setBroken(false);
-    if (!c || c === NO_COVER) return setSrc(null);
-    if (isWebCover(c)) return setSrc(c);
-    let live = true;
-    dash.store.photoUrl(c).then(u => live && setSrc(u));
-    return () => { live = false; };
-  }, [c, dash.store]);
-  if (src && !broken) return <img className="bk-img" src={src} alt="" loading="lazy" onError={() => setBroken(true)} />;
+  useEffect(() => setBroken(false), [c]);
+  const src = web ? c : stored.src;
+  if (src && !broken && !stored.failed) return <img key={stored.attempt} className="bk-img" src={src} alt="" loading="lazy" decoding="async" onError={() => (web ? setBroken(true) : stored.onError())} />;
   return (
     <div className={`bk-img bk-plain paint ${paintFor(book.data.title)}`} aria-hidden="true">
       <span className="bk-plain-title">{book.data.title}</span>

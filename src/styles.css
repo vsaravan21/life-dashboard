@@ -754,3 +754,8 @@ button.linkish:hover { color: var(--accent); }
 .tl-note-input { width: 100%; resize: vertical; font: inherit; font-size: 13.5px; line-height: 1.5; color: var(--ink); border: 0; border-radius: 14px; background: var(--solid); padding: 9px 12px; }
 .pj-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
 .pj-toggle input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+/* A soft shimmer while a photo's link and file arrive */
+.tr-loading { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.45) 50%, transparent 70%) var(--line); background-size: 220% 100%; animation: shimmer 1.3s linear infinite; }
+@keyframes shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@media (prefers-reduced-motion: reduce) { .tr-loading { animation: none; } }
+.pc-fail { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12.5px; }

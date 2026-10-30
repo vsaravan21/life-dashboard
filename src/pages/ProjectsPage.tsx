@@ -6,6 +6,7 @@ import { shrinkPhoto } from "../lib/image";
 import { isImageFile, isVideoFile, isVideoRef, MAX_FILE_MB } from "../lib/media";
 import type { Entry, ProjectCard, ProjectData } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
+import { useStoredUrl } from "../lib/useStoredUrl";
 import { PageShell } from "./PageShell";
 import { colorOf, Swatches } from "./TodoPage";
 
@@ -16,26 +17,21 @@ const COLORS = ["sunset", "periwinkle", "mint", "orchid", "peach", "blush", "hon
 const sizeText = (b: number) => (b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`);
 const extOf = (name: string) => (name.includes(".") ? name.split(".").pop()!.slice(0, 4).toUpperCase() : "FILE");
 
-function useUrl(dash: Dashboard, ref: string) {
-  const [src, setSrc] = useState<string | null>(null);
-  useEffect(() => { let live = true; dash.store.photoUrl(ref).then(u => live && setSrc(u)); return () => { live = false; }; }, [dash.store, ref]);
-  return src;
-}
 
 function Media({ dash, photo, onOpen, onRemove }: { dash: Dashboard; photo: string; onOpen: (src: string) => void; onRemove: () => void }) {
-  const src = useUrl(dash, photo);
+  const { src, onError, failed, attempt } = useStoredUrl(dash.store, photo);
   return (
     <li className="pc-media">
-      {src && (isVideoRef(photo)
-        ? <video src={src} controls playsInline preload="metadata" />
-        : <button className="pc-media-open" aria-label="View photo" onClick={() => onOpen(src)}><img src={src} alt="" loading="lazy" draggable={false} /></button>)}
+      {failed ? <span className="pc-fail sub">Couldn't load this one</span> : src && (isVideoRef(photo)
+        ? <video key={attempt} src={src} controls playsInline preload="metadata" onError={onError} />
+        : <button className="pc-media-open" aria-label="View photo" onClick={() => onOpen(src)}><img key={attempt} src={src} alt="" loading="lazy" decoding="async" draggable={false} onError={onError} /></button>)}
       <button className="pc-x on-media" aria-label="Remove photo" onClick={onRemove}>×</button>
     </li>
   );
 }
 
 function FileRow({ dash, file, onRemove }: { dash: Dashboard; file: ProjectCard["files"][number]; onRemove: () => void }) {
-  const src = useUrl(dash, file.ref);
+  const { src } = useStoredUrl(dash.store, file.ref);
   return (
     <li className="pc-file">
       <a href={src ?? undefined} download={file.name} target="_blank" rel="noreferrer">
