@@ -817,3 +817,5 @@ button.linkish:hover { color: var(--accent); }
 .tr-adjust-bar input { flex: 1; min-width: 0; accent-color: var(--accent); }
 .tr-adjust-btn { border: 0; border-radius: 999px; padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 600; background: transparent; color: inherit; cursor: pointer; }
 .tr-adjust-btn.done { background: var(--accent); color: #fff; }
+/* Once a photo's shape is known it's laid out whole and scaled to fill, so zooming out reveals its edges. */
+.tr-slide img.framed { object-fit: contain; }

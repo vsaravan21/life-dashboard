@@ -20,26 +20,42 @@ function dotEdge(total: number, at: number, n: number) {
 
 /** How a photo sits in its frame: moved by x and y (percent of the frame) and zoomed by z, where 1 fills the frame. */
 export interface Framing { x: number; y: number; z: number }
-const MIN_Z = 0.5, MAX_Z = 4;
+const MAX_Z = 4;
+/** Zoom out at least far enough to see the whole photo (1 / cover), and never below a quarter. */
+export const minZoom = (cover: number) => Math.max(0.25, Math.min(0.5, 1 / cover));
 const clampNum = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 /** Keep the zoom in range and the photo from sliding entirely out of its frame. */
-export function clampFrame(f: Framing): Framing {
-  const z = clampNum(f.z, MIN_Z, MAX_Z), reach = 50 * z + 40;
+export function clampFrame(f: Framing, min = 0.5): Framing {
+  const z = clampNum(f.z, min, MAX_Z), reach = 50 * z + 40;
   return { z: Math.round(z * 100) / 100, x: clampNum(f.x, -reach, reach), y: clampNum(f.y, -reach, reach) };
 }
-export const frameStyle = (f?: Framing) => (f ? { transform: `translate(${f.x}%, ${f.y}%) scale(${f.z})` } : undefined);
+/**
+ * The photo is laid out whole inside its frame (contain), then scaled up by `cover` so it fills the frame like before.
+ * Zooming out below 1 therefore reveals the parts that were cut off, instead of shrinking a cropped picture.
+ */
+export const frameStyle = (f: Framing | undefined, cover: number) => {
+  const { x, y, z } = f ?? { x: 0, y: 0, z: 1 };
+  return { transform: `translate(${x}%, ${y}%) scale(${+(z * cover).toFixed(4)})` };
+};
+/** How much a contained photo must grow to fill the frame: 1 when the shapes match, more the more they differ. */
+export function coverScale(frameW: number, frameH: number, imgW: number, imgH: number) {
+  if (!frameW || !frameH || !imgW || !imgH) return 1;
+  const sx = frameW / imgW, sy = frameH / imgH;
+  return Math.max(sx, sy) / Math.min(sx, sy);
+}
 const isDefault = (f: Framing) => f.z === 1 && Math.abs(f.x) < 0.5 && Math.abs(f.y) < 0.5;
 
 /**
  * Reframing one photo: drag to move it, pinch or scroll to zoom, or use the slider.
  * Changes show live and are saved with Done.
  */
-function Adjuster({ f, onChange, onDone, onCancel }: { f: Framing; onChange: (f: Framing) => void; onDone: (f: Framing | null) => void; onCancel: () => void }) {
+function Adjuster({ f, cover, onChange, onDone, onCancel }: { f: Framing; cover: number; onChange: (f: Framing) => void; onDone: (f: Framing | null) => void; onCancel: () => void }) {
+  const min = minZoom(cover);
   const box = useRef<HTMLDivElement>(null);
   const live = useRef(f);
   live.current = f;
   const pts = useRef(new Map<number, { x: number; y: number }>());
-  const set = (next: Framing) => { live.current = clampFrame(next); onChange(live.current); };
+  const set = (next: Framing) => { live.current = clampFrame(next, min); onChange(live.current); };
 
   useEffect(() => {
     const el = box.current!;
@@ -76,8 +92,9 @@ function Adjuster({ f, onChange, onDone, onCancel }: { f: Framing; onChange: (f:
       </div>
       <div className="tr-adjust-bar" onPointerDown={e => e.stopPropagation()}>
         <span aria-hidden="true">−</span>
-        <input type="range" min={MIN_Z} max={MAX_Z} step={0.01} value={f.z} aria-label="Zoom" onChange={e => set({ ...f, z: Number(e.target.value) })} />
+        <input type="range" min={min} max={MAX_Z} step={0.01} value={f.z} aria-label="Zoom" onChange={e => set({ ...f, z: Number(e.target.value) })} />
         <span aria-hidden="true">+</span>
+        {cover > 1.01 && <button className="tr-adjust-btn" onClick={() => set({ x: 0, y: 0, z: 1 / cover })} title="Show the whole photo">Fit</button>}
         <button className="tr-adjust-btn" onClick={() => set({ x: 0, y: 0, z: 1 })}>Reset</button>
         <button className="tr-adjust-btn done" onClick={() => onDone(isDefault(f) ? null : f)}>Done</button>
       </div>
@@ -111,6 +128,8 @@ function Slide({ dash, photo, alt, lift, note, onNote, near, frame, adjusting, o
   const { src, onError, failed, attempt } = useStoredUrl(dash.store, photo);
   // While adjusting, the photo follows this draft; it's saved only with Done.
   const [draft, setDraft] = useState<Framing>(frame ?? { x: 0, y: 0, z: 1 });
+  // Known once the photo loads; until then it shows cropped to fill, as it always has.
+  const [cover, setCover] = useState<number | null>(null);
   useEffect(() => { if (adjusting) setDraft(frame ?? { x: 0, y: 0, z: 1 }); }, [adjusting]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className={"tr-slide" + (lift !== undefined ? " lifted" : "") + (adjusting ? " adjusting" : "")} style={lift !== undefined ? { transform: `translateX(${lift}px) scale(.93)` } : undefined}>
@@ -118,9 +137,11 @@ function Slide({ dash, photo, alt, lift, note, onNote, near, frame, adjusting, o
         : !src ? <span className="tr-loading" aria-label="Loading" />
         : isVideoRef(photo) ? <video key={attempt} src={src} controls playsInline preload="metadata" aria-label={alt} onError={onError} />
         // The photo on screen and its neighbors load right away; the rest wait until you get close.
-        : <img key={attempt} src={src} alt={alt} loading={near ? "eager" : "lazy"} decoding="async" draggable={false} onError={onError} style={frameStyle(adjusting ? draft : frame)} />}
+        : <img key={attempt} src={src} alt={alt} loading={near ? "eager" : "lazy"} decoding="async" draggable={false} onError={onError}
+            className={cover ? "framed" : undefined} style={cover ? frameStyle(adjusting ? draft : frame, cover) : undefined}
+            onLoad={e => { const im = e.currentTarget; setCover(coverScale(im.clientWidth, im.clientHeight, im.naturalWidth, im.naturalHeight)); }} />}
       {src && !failed && !adjusting && <PhotoNote text={note} onSave={onNote} />}
-      {adjusting && <Adjuster f={draft} onChange={setDraft} onDone={f => { onFrame(f); onStopAdjust(); }} onCancel={onStopAdjust} />}
+      {adjusting && <Adjuster f={draft} cover={cover ?? 1} onChange={setDraft} onDone={f => { onFrame(f); onStopAdjust(); }} onCancel={onStopAdjust} />}
     </div>
   );
 }
