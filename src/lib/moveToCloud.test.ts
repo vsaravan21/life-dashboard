@@ -24,7 +24,7 @@ describe("moveToCloud", () => {
       e("t1", "todos", { text: "Milk", done: false, listId: "l1" }, "2"),
       e("l1", "lists", { title: "Groceries", color: "mint", created: "2026-10-01" }, "1"),
       e("j1", "journal", { caption: "Beach", date: "2026-03-22", photo: "idb:abc" }, "3"),
-      e("tr", "trips", { place: "Cancun", start: "2026-03-21", end: "2026-03-28", photos: ["idb:1", "idb:2"], notes: { "idb:2": "Sunset swim" } }, "4"),
+      e("tr", "trips", { place: "Cancun", start: "2026-03-21", end: "2026-03-28", photos: ["idb:1", "idb:2"], notes: { "idb:2": "Sunset swim" }, framing: { "idb:1": { x: 10, y: 0, z: 1.5 } } }, "4"),
       e("b1", "books", { title: "Becoming", status: "done", progress: 100, cover: "https://covers.openlibrary.org/b/id/1-L.jpg" }, "5"),
     ]);
     const cloud = fakeStore();
@@ -35,6 +35,7 @@ describe("moveToCloud", () => {
     const trip = cloud.entries.find(x => x.kind === "trips")!.data as { photos: string[]; notes: Record<string, string> };
     expect(trip.photos).toEqual(["cloud/2.jpg", "cloud/3.jpg"]);
     expect(trip.notes).toEqual({ "cloud/3.jpg": "Sunset swim" });
+    expect((trip as unknown as { framing: object }).framing).toEqual({ "cloud/2.jpg": { x: 10, y: 0, z: 1.5 } });
     expect((cloud.entries.find(x => x.kind === "books")!.data as { cover: string }).cover).toMatch(/^https:/);
   });
 

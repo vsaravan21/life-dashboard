@@ -3,7 +3,7 @@ import { plural } from "../components/ui";
 import { daysBetween, fmt, today } from "../lib/dates";
 import { busiestYears, byYear, countryOf, flightWhen, isInternational, isUpcoming, yearStats } from "../lib/flights";
 import { ImportButton } from "../components/ImportButton";
-import { CoverNote, keepNotes, NoteField, NoteMark, Slides } from "../components/Slides";
+import { type Framing, CoverNote, keepFraming, keepNotes, NoteField, NoteMark, Slides } from "../components/Slides";
 import type { Entry, TripData } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
 import { colorOf, Swatches } from "./TodoPage";
@@ -46,7 +46,11 @@ function TripCard({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboar
     dash.patch(trip, { [key]: v });
   };
 
-  const setPhotos = (photos: string[]) => dash.patch(trip, { photos, notes: keepNotes(trip.data.notes, photos) });
+  const setPhotos = (photos: string[]) => dash.patch(trip, { photos, notes: keepNotes(trip.data.notes, photos), framing: keepFraming(trip.data.framing, photos) });
+  const setFraming = (ref: string, f: Framing | null) => {
+    const { [ref]: _, ...rest } = trip.data.framing ?? {};
+    dash.patch(trip, { framing: f ? { ...rest, [ref]: f } : rest });
+  };
   const setNote = (ref: string, text: string) => dash.patch(trip, { notes: keepNotes({ ...trip.data.notes, [ref]: text }, trip.data.photos ?? []) });
 
   return (
@@ -81,7 +85,7 @@ function TripCard({ trip, dash, notify }: { trip: Entry<"trips">; dash: Dashboar
           </button>
         </div>
       )}
-      <Slides photos={trip.data.photos} setPhotos={setPhotos} notes={trip.data.notes} setNote={setNote} label={trip.data.place} dash={dash} notify={notify} />
+      <Slides photos={trip.data.photos} setPhotos={setPhotos} notes={trip.data.notes} setNote={setNote} framing={trip.data.framing} setFraming={setFraming} label={trip.data.place} dash={dash} notify={notify} />
     </section>
   );
 }

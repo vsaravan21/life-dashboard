@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { CoverNote, keepNotes, NoteField, NoteMark, Slides } from "../components/Slides";
+import { type Framing, CoverNote, keepFraming, keepNotes, NoteField, NoteMark, Slides } from "../components/Slides";
 import { plural } from "../components/ui";
 import { fmt, today } from "../lib/dates";
 import type { Entry, JournalData } from "../lib/types";
@@ -22,7 +22,11 @@ function HighlightCard({ h, dash, notify }: { h: Entry<"journal">; dash: Dashboa
   const photos = photosOf(d);
 
   // Saving the list also moves an older single photo into it.
-  const setPhotos = (list: string[]) => dash.patch(h, { photos: list, photo: undefined, notes: keepNotes(d.notes, list) });
+  const setPhotos = (list: string[]) => dash.patch(h, { photos: list, photo: undefined, notes: keepNotes(d.notes, list), framing: keepFraming(d.framing, list) });
+  const setFraming = (ref: string, f: Framing | null) => {
+    const { [ref]: _, ...rest } = d.framing ?? {};
+    dash.patch(h, { photos, framing: f ? { ...rest, [ref]: f } : rest });
+  };
   const setNote = (ref: string, text: string) => dash.patch(h, { notes: keepNotes({ ...d.notes, [ref]: text }, photos) });
   const saveTitle = () => {
     const t = title.trim() || "Untitled";
@@ -57,7 +61,7 @@ function HighlightCard({ h, dash, notify }: { h: Entry<"journal">; dash: Dashboa
           </button>
         </div>
       )}
-      <Slides photos={photos} setPhotos={setPhotos} notes={d.notes} setNote={setNote} label={d.caption} dash={dash} notify={notify} />
+      <Slides photos={photos} setPhotos={setPhotos} notes={d.notes} setNote={setNote} framing={d.framing} setFraming={setFraming} label={d.caption} dash={dash} notify={notify} />
     </section>
   );
 }

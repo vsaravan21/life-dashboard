@@ -798,3 +798,22 @@ button.linkish:hover { color: var(--accent); }
 .un-dates label { display: inline-flex; align-items: center; gap: 6px; }
 .un-photo-row { display: flex; flex-wrap: wrap; gap: 6px; flex-basis: 100%; }
 .un-form .acts { flex-basis: 100%; display: flex; gap: 8px; }
+
+/* Adjusting a photo: zoom and move it inside its frame */
+.tr-slide img { transform-origin: center; }
+.tr-track.adjusting { overflow-x: hidden; scroll-snap-type: none; }
+.tr-act.on { background: var(--accent); color: #fff; }
+.tr-adjust { position: absolute; inset: 0; z-index: 2; cursor: grab; touch-action: none; outline: none;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.85); background:
+  linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.35)) 33.33% 0 / 1px 100% no-repeat,
+  linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.35)) 66.66% 0 / 1px 100% no-repeat,
+  linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.35)) 0 33.33% / 100% 1px no-repeat,
+  linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.35)) 0 66.66% / 100% 1px no-repeat; }
+.tr-adjust:active { cursor: grabbing; }
+.tr-adjust-hint { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 4px 10px; border-radius: 999px;
+  background: rgba(0,0,0,.45); color: #fff; font-size: 11.5px; pointer-events: none; backdrop-filter: blur(6px); }
+.tr-adjust-bar { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 3; display: flex; align-items: center; gap: 8px; padding: 7px 8px 7px 12px;
+  border-radius: 999px; background: rgba(255,255,255,.9); color: #2a2730; backdrop-filter: blur(10px); box-shadow: 0 8px 20px -10px rgba(0,0,0,.4); font-size: 14px; }
+.tr-adjust-bar input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.tr-adjust-btn { border: 0; border-radius: 999px; padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 600; background: transparent; color: inherit; cursor: pointer; }
+.tr-adjust-btn.done { background: var(--accent); color: #fff; }

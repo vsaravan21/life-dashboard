@@ -12,7 +12,7 @@ const stored = (r: string | undefined): r is string => !!r && r !== "none" && !i
 /** An entry's data without photo refs or links to other entries, to tell whether two entries are the same thing. */
 function fingerprint(e: Entry) {
   const d = { ...(e.data as unknown as Record<string, unknown>) };
-  delete d.photo; delete d.photos; delete d.notes; delete d.listId;
+  delete d.photo; delete d.photos; delete d.notes; delete d.framing; delete d.listId;
   // A project's cards hold file refs, which differ between browser and account; compare their words only.
   if (e.kind === "projects" && Array.isArray(d.cards)) d.cards = (d.cards as { title: string; text: string }[]).map(c => [c.title, c.text]);
   if (e.kind === "books" && typeof d.cover === "string" && !isWeb(d.cover)) delete d.cover;
@@ -47,17 +47,20 @@ export async function moveToCloud(local: Store, cloud: Store, cloudEntries: Entr
     } else {
       const data = structuredClone(e.data) as unknown as Record<string, unknown>;
       if ((e.kind === "journal" || e.kind === "upnext") && stored(data.photo as string)) data.photo = (await copyPhoto(data.photo as string)) ?? undefined;
-      // Photo lists move one by one, and each photo's note follows it to its new ref.
+      // Photo lists move one by one, and each photo's note and framing follow it to its new ref.
       if ((e.kind === "trips" || e.kind === "journal") && Array.isArray(data.photos)) {
-        const notes = (data.notes ?? {}) as Record<string, string>, moved: Record<string, string> = {}, list: string[] = [];
+        const notes = (data.notes ?? {}) as Record<string, string>, framing = (data.framing ?? {}) as Record<string, unknown>;
+        const movedNotes: Record<string, string> = {}, movedFraming: Record<string, unknown> = {}, list: string[] = [];
         for (const p of data.photos as string[]) {
           const to = stored(p) ? await copyPhoto(p) : p;
           if (!to) continue;
           list.push(to);
-          if (notes[p]) moved[to] = notes[p];
+          if (notes[p]) movedNotes[to] = notes[p];
+          if (framing[p]) movedFraming[to] = framing[p];
         }
         data.photos = list;
-        data.notes = moved;
+        data.notes = movedNotes;
+        data.framing = movedFraming;
       }
       if (e.kind === "projects" && Array.isArray(data.cards))
         for (const c of data.cards as DataByKind["projects"]["cards"]) {

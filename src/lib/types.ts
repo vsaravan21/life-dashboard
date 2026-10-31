@@ -33,7 +33,10 @@ export interface TripData {
   color?: string; photos?: string[];
   /** A short note on each photo, by its ref. */
   notes?: Record<string, string>;
+  /** How each photo is zoomed and placed in its frame, by its ref. */
+  framing?: Record<string, PhotoFraming>;
 }
+export interface PhotoFraming { x: number; y: number; z: number }
 /**
  * A flight on the Travel page. `date` is "YYYY-MM-DD", or "YYYY-MM" when only the month is known.
  * `from` and `to` are cities or airport codes; `note` marks a first or anything memorable.
@@ -52,6 +55,7 @@ export interface JournalData {
   caption: string; date: string; photo?: string;
   photos?: string[]; note?: string; color?: string;
   notes?: Record<string, string>;
+  framing?: Record<string, PhotoFraming>;
 }
 export interface WinData { title: string; date: string; note?: string }
 /** A card inside a project: a title, some text, photos or videos, and files. */
