@@ -24,7 +24,6 @@ import { EmptyPage } from "./pages/PageShell";
 import { Calendar } from "./sections/Calendar";
 import { Journal } from "./sections/Journal";
 import { LookingBack } from "./sections/LookingBack";
-import { Notes } from "./sections/Notes";
 import { Todos } from "./sections/Todos";
 import { UpNext } from "./sections/UpNext";
 
@@ -99,7 +98,6 @@ function DashboardView({ store, onSignOut, sync }: { store: Store; onSignOut?: (
         <Todos dash={dash} />
         <LookingBack dash={dash} />
         <Journal dash={dash} notify={notify} />
-        <Notes dash={dash} />
       </div>
     </>
   );
