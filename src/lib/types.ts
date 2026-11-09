@@ -77,7 +77,12 @@ export interface ProjectData {
 /** A big trip coming up, shown only in the home page's "Up next" card. With no start date it's still a dream, and `when` says roughly when. */
 export interface UpNextData {
   place: string; sub?: string; start?: string; end?: string; when?: string;
-  color: string; photo?: string;
+  color: string;
+  /** A stored photo, or a link to one on the web. */
+  photo?: string;
+  /** Free-form plans, shown as a note when you hover the tile. */
+  itinerary?: string;
+  /** No longer shown; older trips may still carry it. */
   booked?: { flights?: boolean; stay?: boolean; timeoff?: boolean };
 }
 

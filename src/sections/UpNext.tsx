@@ -8,9 +8,9 @@ import { colorOf, Swatches } from "../pages/TodoPage";
 
 type Trip = Entry<"upnext">;
 const COLORS = ["sunset", "periwinkle", "mint", "blush", "honey", "orchid"];
-const BOOKED = [["flights", "Flights"], ["stay", "Stay"], ["timeoff", "Time off"]] as const;
-/** Two tiles show until you ask for the rest. */
-const SHOWN = 2;
+/** Up to four tiles show until you ask for the rest. */
+const SHOWN = 4;
+const isWeb = (r?: string) => !!r && /^https?:\/\//.test(r);
 
 /** Dated trips soonest first, then the ones you're still dreaming about. Trips that are over drop off. */
 export function upcoming(trips: Trip[], now = today()) {
@@ -38,32 +38,50 @@ const dates = (d: UpNextData) => {
   return end ? `${start} – ${fmt(end, { month: "short", day: "numeric", year: "numeric" })}` : start;
 };
 
-function Tile({ trip, dash, big, onEdit }: { trip: Trip; dash: Dashboard; big: boolean; onEdit: () => void }) {
+/** A stored photo's link, or a web link as it is. */
+function usePhoto(dash: Dashboard, ref?: string) {
+  const stored = useStoredUrl(dash.store, isWeb(ref) ? null : ref);
+  return isWeb(ref) ? { src: ref!, onError: () => undefined, attempt: 0, web: true } : { ...stored, web: false };
+}
+
+/** How bright the bottom of a photo is, 0 to 1, so the frosted text can pick light or dark glass. Web photos can't be read; they get dark glass. */
+function brightness(img: HTMLImageElement): number | null {
+  try {
+    const c = document.createElement("canvas");
+    c.width = 24; c.height = 12;
+    const g = c.getContext("2d", { willReadFrequently: true })!;
+    g.drawImage(img, 0, img.naturalHeight * 0.55, img.naturalWidth, img.naturalHeight * 0.45, 0, 0, 24, 12);
+    const px = g.getImageData(0, 0, 24, 12).data;
+    let sum = 0;
+    for (let i = 0; i < px.length; i += 4) sum += 0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2];
+    return sum / (px.length / 4) / 255;
+  } catch { return null; }
+}
+
+function Tile({ trip, dash, size, onEdit }: { trip: Trip; dash: Dashboard; size: number; onEdit: () => void }) {
   const d = trip.data;
-  const { src } = useStoredUrl(dash.store, d.photo);
+  const { src, onError, attempt, web } = usePhoto(dash, d.photo);
+  const [light, setLight] = useState(false);
+  const [open, setOpen] = useState(false);
   const c = countdown(d);
-  const toggle = (k: keyof NonNullable<UpNextData["booked"]>) => dash.patch(trip, { booked: { ...d.booked, [k]: !d.booked?.[k] } });
+  const plan = d.itinerary?.trim();
   return (
-    <article className={`un-tile cover ${colorOf(d.color).cover}` + (big ? " big" : "") + (src ? " has-photo" : "")} aria-label={d.place}>
-      {src && <img className="un-photo" src={src} alt="" decoding="async" />}
-      <button className="un-edit" aria-label={`Edit ${d.place}`} title="Edit" onClick={onEdit}>
+    <article className={`un-tile cover ${colorOf(d.color).cover}` + (src ? " has-photo" : "") + (light ? " light" : "") + (open ? " open" : "") + (size === 1 ? " solo" : "")}
+      aria-label={d.place} onClick={() => setOpen(o => !o)} onMouseLeave={() => setOpen(false)}>
+      {src && <img key={attempt} className="un-photo" src={src} alt="" decoding="async" crossOrigin={web ? undefined : "anonymous"}
+        onError={onError} onLoad={e => setLight((brightness(e.currentTarget) ?? 0) > 0.62)} />}
+      <span className="un-chip"><b>{c.big}</b>{d.start && c.big !== "Now" ? " " + c.small : ""}</span>
+      <button className="un-edit" aria-label={`Edit ${d.place}`} title="Edit" onClick={e => { e.stopPropagation(); onEdit(); }}>
         <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h4L19 9l-4-4L4 16Z" /><path d="m13.5 6.5 4 4" /></svg>
       </button>
-      <div className="un-count">
-        <b className={d.start ? "" : "loose"}>{c.big}</b>
-        <span>{c.small}</span>
-      </div>
-      <div className="un-info">
+      <div className="un-glass">
         <h3>{d.place}</h3>
-        {(d.sub || d.start) && <p>{[d.sub, dates(d)].filter(Boolean).join(" · ")}</p>}
-        <div className="un-booked" role="group" aria-label="Booked">
-          {BOOKED.map(([k, label]) => (
-            <button key={k} className={d.booked?.[k] ? "on" : ""} aria-pressed={!!d.booked?.[k]} onClick={() => toggle(k)}>
-              {d.booked?.[k] && <svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>}
-              {label}
-            </button>
-          ))}
-        </div>
+        <p>{[d.sub, dates(d)].filter(Boolean).join(" · ") || "Still dreaming"}</p>
+      </div>
+      <div className="un-plan" role="note" aria-label={`${d.place} itinerary`}>
+        <span className="un-plan-head">Itinerary</span>
+        {plan ? <div className="un-plan-text">{plan}</div>
+          : <button className="un-plan-add" onClick={e => { e.stopPropagation(); onEdit(); }}>No plans yet. Add an itinerary</button>}
       </div>
     </article>
   );
@@ -76,6 +94,8 @@ function TripForm({ trip, dash, notify, color: startColor, onDone }: { trip?: Tr
   const [dated, setDated] = useState(d ? !!d.start : true);
   const [photo, setPhoto] = useState<File | null>(null);
   const [dropPhoto, setDropPhoto] = useState(false);
+  const [link, setLink] = useState(isWeb(d?.photo) ? d!.photo! : "");
+  const [linking, setLinking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const file = useRef<HTMLInputElement>(null);
@@ -87,10 +107,12 @@ function TripForm({ trip, dash, notify, color: startColor, onDone }: { trip?: Tr
     setBusy(true);
     try {
       let ref = dropPhoto ? undefined : d?.photo;
-      if (photo) ref = await dash.store.uploadPhoto(await shrinkPhoto(photo, 1200));
-      if (d?.photo && d.photo !== ref) dash.store.removePhoto(d.photo).catch(() => undefined);
+      const url = link.trim();
+      if (photo) ref = await dash.store.uploadPhoto(await shrinkPhoto(photo, 1600));
+      else if (!dropPhoto && url && url !== d?.photo) ref = await fromWeb(url);
+      if (d?.photo && d.photo !== ref && !isWeb(d.photo)) dash.store.removePhoto(d.photo).catch(() => undefined);
       const data: UpNextData = {
-        place: v.place.trim() || "Somewhere", sub: v.sub.trim() || undefined, color, photo: ref, booked: d?.booked,
+        place: v.place.trim() || "Somewhere", sub: v.sub.trim() || undefined, color, photo: ref, itinerary: v.itinerary.trim() || undefined,
         ...(dated ? { start: v.start, end: v.end || undefined } : { when: v.when.trim() || undefined }),
       };
       if (trip) await dash.patch(trip, { ...data, ...(dated ? { when: undefined } : { start: undefined, end: undefined }) });
@@ -101,8 +123,20 @@ function TripForm({ trip, dash, notify, color: startColor, onDone }: { trip?: Tr
     } finally { setBusy(false); }
   };
 
+  /** Keep a copy of a web photo when the site allows it, so it can't vanish; otherwise keep the link. */
+  const fromWeb = async (url: string) => {
+    try {
+      const res = await fetch(url, { mode: "cors" });
+      const blob = await res.blob();
+      if (!res.ok || !blob.type.startsWith("image/")) throw new Error();
+      return await dash.store.uploadPhoto(await shrinkPhoto(new File([blob], "photo", { type: blob.type }), 1600));
+    } catch { return url; }
+  };
+  const pick = (f: File | null | undefined) => { if (f) { setPhoto(f); setDropPhoto(false); setLink(""); setLinking(false); } };
+  const hasPhoto = !!photo || !!link.trim() || (!!d?.photo && !isWeb(d.photo) && !dropPhoto);
+
   return (
-    <form className="add un-form" onSubmit={save}>
+    <form className="add un-form" onSubmit={save} onPaste={e => pick([...e.clipboardData.files].find(f => f.type.startsWith("image/")))}>
       <input className="grow" name="place" defaultValue={d?.place} placeholder="Where to? New York, Europe…" required aria-label="Where" autoFocus />
       <input className="grow" name="sub" defaultValue={d?.sub} placeholder="A line under it, like Paris · Rome · Amalfi (optional)" aria-label="Details" />
       <div className="seg" role="radiogroup" aria-label="Dates">
@@ -117,12 +151,18 @@ function TripForm({ trip, dash, notify, color: startColor, onDone }: { trip?: Tr
       ) : (
         <input className="grow" name="when" defaultValue={d?.when} placeholder="Roughly when? Summer 2027, someday…" aria-label="Roughly when" />
       )}
-      <Swatches value={color} onChange={setColor} />
+      <textarea className="grow un-itin" name="itinerary" rows={4} defaultValue={d?.itinerary} aria-label="Itinerary"
+        placeholder={"Itinerary (optional). It shows when you hover the card.\nDay 1: land at JFK, dinner in the West Village\nDay 2: the Met, Central Park"} />
       <div className="un-photo-row">
-        <button type="button" className="btn sm" onClick={() => file.current?.click()}>{photo ? photo.name : d?.photo && !dropPhoto ? "Change photo" : "Add a photo"}</button>
-        {(photo || (d?.photo && !dropPhoto)) && <button type="button" className="btn sm" onClick={() => { setPhoto(null); setDropPhoto(true); }}>Use the color instead</button>}
-        <input ref={file} type="file" accept="image/*" hidden aria-label="Photo" onChange={e => { setPhoto(e.target.files?.[0] ?? null); setDropPhoto(false); }} />
+        <button type="button" className="btn sm" onClick={() => file.current?.click()}>{photo ? photo.name : hasPhoto ? "Change photo" : "Upload a photo"}</button>
+        {!photo && <button type="button" className={"btn sm" + (linking || link ? " on" : "")} onClick={() => setLinking(l => !l)}>Photo from a link</button>}
+        {hasPhoto && <button type="button" className="btn sm" onClick={() => { setPhoto(null); setLink(""); setLinking(false); setDropPhoto(true); }}>Use the color instead</button>}
+        <input ref={file} type="file" accept="image/*" hidden aria-label="Photo" onChange={e => pick(e.target.files?.[0])} />
+        {(linking || link) && !photo && (
+          <input className="grow" type="url" value={link} onChange={e => { setLink(e.target.value); setDropPhoto(false); }} placeholder="Paste an image link from the web" aria-label="Photo link" />
+        )}
       </div>
+      {!hasPhoto && <Swatches value={color} onChange={setColor} />}
       <div className="acts">
         {trip && (
           <button type="button" className={"btn" + (confirm ? " danger" : "")} onClick={() => (confirm ? (dash.remove(trip), onDone()) : setConfirm(true))}>
@@ -168,8 +208,8 @@ export function UpNext({ dash, notify }: { dash: Dashboard; notify: (m: string) 
           <span className="un-plus" aria-hidden="true">+</span>
         </button>
       ) : (
-        <div className={"un-tiles n" + Math.min(shown.length, 2)}>
-          {shown.map(t => <Tile key={t.id} trip={t} dash={dash} big={shown.length === 1} onEdit={() => { setAdding(false); setEditing(t.id); }} />)}
+        <div className={"un-tiles n" + Math.min(shown.length, 4)}>
+          {shown.map(t => <Tile key={t.id} trip={t} dash={dash} size={shown.length} onEdit={() => { setAdding(false); setEditing(t.id); }} />)}
         </div>
       )}
     </section>
