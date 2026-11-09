@@ -126,7 +126,6 @@ export function CalendarPage({ dash }: { dash: Dashboard }) {
               ))}
             </ul>
           )}
-          {g.status === "paused" && <p className="sub">Tap Sync Google Calendar to show your Google events.</p>}
         </aside>
       </div>
       {editing && <EventEditor target={editing} dash={dash} g={g} onClose={() => setEditing(null)} />}

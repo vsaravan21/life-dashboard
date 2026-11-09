@@ -43,7 +43,6 @@ export function Calendar({ dash }: { dash: Dashboard }) {
     <Panel id="p-events" title="Calendar" cover="c-events" label="Next 14 days" addLabel="Add event" extra={<GoogleControl g={g} />}
       form={close => <EventEditor target={{ kind: "new", date: t }} dash={dash} g={g} onClose={close} />}>
       {g.error && <p className="err">{g.error}</p>}
-      {g.status === "paused" && !g.error && <p className="sub">Tap Sync to show your Google Calendar events again.</p>}
       <div className="week">
         {week.map((d, i) => {
           const n = items.filter(e => e.date === d).length;
