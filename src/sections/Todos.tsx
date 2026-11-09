@@ -38,7 +38,6 @@ export function Todos({ dash }: { dash: Dashboard }) {
       )}>
       {open.length ? <ul className="list">{open.map(row)}</ul>
         : <Empty>{starred ? `Nothing left on ${starred.data.title}.` : "All clear. Add a task when something comes up."}</Empty>}
-      {!starred && dash.entries.lists.length > 0 && <p className="sub">Star a list on the To-do page to show just that list here.</p>}
       {done.length > 0 && <>
         <div className="label">Done · {done.length}</div>
         <ul className="list">{done.slice(0, 3).map(row)}</ul>

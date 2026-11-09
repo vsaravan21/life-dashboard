@@ -92,6 +92,13 @@ main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 @media (min-width: 1400px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } #p-journal { grid-column: span 2; } }
 .panel { padding: 6px 6px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; scroll-margin-top: 24px; }
 .panel > :not(.cover) { margin-inline: 14px; }
+.panel-body { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+/* The first row of home cards stays short; what doesn't fit scrolls inside the card. */
+@media (min-width: 760px) {
+  #p-events, #p-todos, #p-lookback { height: 370px; }
+  #p-events .panel-body, #p-todos .panel-body, #p-lookback .panel-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-right: 6px; padding-right: 8px; }
+  #p-events .agenda, #p-lookback .home-scroll { max-height: none; overflow: visible; }
+}
 .cover { position: relative; height: 118px; border-radius: 26px; overflow: hidden; isolation: isolate; display: flex; align-items: flex-end; padding: 14px 14px 14px 20px; }
 .cover::before { content: ""; position: absolute; inset: -30px; z-index: -2; filter: blur(16px) saturate(1.15); background: var(--paint); }
 .cover::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, transparent 30%, var(--cover-fade) 100%); }

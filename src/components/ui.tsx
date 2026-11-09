@@ -93,8 +93,10 @@ export function Panel({ id, title, cover, label, extra, addLabel, form, children
         <button className="add-btn" aria-label={addLabel} aria-expanded={open} onClick={() => setOpen(o => !o)}>+</button>
       </div>
       <div className="sec-meta"><span className="label">{label}</span>{extra}</div>
-      {open && form(() => setOpen(false))}
-      {children}
+      <div className="panel-body">
+        {open && form(() => setOpen(false))}
+        {children}
+      </div>
     </section>
   );
 }
