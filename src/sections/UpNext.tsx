@@ -94,8 +94,6 @@ function TripForm({ trip, dash, notify, color: startColor, onDone }: { trip?: Tr
   const [dated, setDated] = useState(d ? !!d.start : true);
   const [photo, setPhoto] = useState<File | null>(null);
   const [dropPhoto, setDropPhoto] = useState(false);
-  const [link, setLink] = useState(isWeb(d?.photo) ? d!.photo! : "");
-  const [linking, setLinking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const file = useRef<HTMLInputElement>(null);
@@ -107,9 +105,7 @@ function TripForm({ trip, dash, notify, color: startColor, onDone }: { trip?: Tr
     setBusy(true);
     try {
       let ref = dropPhoto ? undefined : d?.photo;
-      const url = link.trim();
       if (photo) ref = await dash.store.uploadPhoto(await shrinkPhoto(photo, 1600));
-      else if (!dropPhoto && url && url !== d?.photo) ref = await fromWeb(url);
       if (d?.photo && d.photo !== ref && !isWeb(d.photo)) dash.store.removePhoto(d.photo).catch(() => undefined);
       const data: UpNextData = {
         place: v.place.trim() || "Somewhere", sub: v.sub.trim() || undefined, color, photo: ref, itinerary: v.itinerary.trim() || undefined,
@@ -123,17 +119,8 @@ function TripForm({ trip, dash, notify, color: startColor, onDone }: { trip?: Tr
     } finally { setBusy(false); }
   };
 
-  /** Keep a copy of a web photo when the site allows it, so it can't vanish; otherwise keep the link. */
-  const fromWeb = async (url: string) => {
-    try {
-      const res = await fetch(url, { mode: "cors" });
-      const blob = await res.blob();
-      if (!res.ok || !blob.type.startsWith("image/")) throw new Error();
-      return await dash.store.uploadPhoto(await shrinkPhoto(new File([blob], "photo", { type: blob.type }), 1600));
-    } catch { return url; }
-  };
-  const pick = (f: File | null | undefined) => { if (f) { setPhoto(f); setDropPhoto(false); setLink(""); setLinking(false); } };
-  const hasPhoto = !!photo || !!link.trim() || (!!d?.photo && !isWeb(d.photo) && !dropPhoto);
+  const pick = (f: File | null | undefined) => { if (f) { setPhoto(f); setDropPhoto(false); } };
+  const hasPhoto = !!photo || (!!d?.photo && !dropPhoto);
 
   return (
     <form className="add un-form" onSubmit={save} onPaste={e => pick([...e.clipboardData.files].find(f => f.type.startsWith("image/")))}>
@@ -152,15 +139,11 @@ function TripForm({ trip, dash, notify, color: startColor, onDone }: { trip?: Tr
         <input className="grow" name="when" defaultValue={d?.when} placeholder="Roughly when? Summer 2027, someday…" aria-label="Roughly when" />
       )}
       <textarea className="grow un-itin" name="itinerary" rows={4} defaultValue={d?.itinerary} aria-label="Itinerary"
-        placeholder={"Itinerary (optional). It shows when you hover the card.\nDay 1: land at JFK, dinner in the West Village\nDay 2: the Met, Central Park"} />
+        placeholder="Itinerary" />
       <div className="un-photo-row">
         <button type="button" className="btn sm" onClick={() => file.current?.click()}>{photo ? photo.name : hasPhoto ? "Change photo" : "Upload a photo"}</button>
-        {!photo && <button type="button" className={"btn sm" + (linking || link ? " on" : "")} onClick={() => setLinking(l => !l)}>Photo from a link</button>}
-        {hasPhoto && <button type="button" className="btn sm" onClick={() => { setPhoto(null); setLink(""); setLinking(false); setDropPhoto(true); }}>Use the color instead</button>}
+        {hasPhoto && <button type="button" className="btn sm" onClick={() => { setPhoto(null); setDropPhoto(true); }}>Use the color instead</button>}
         <input ref={file} type="file" accept="image/*" hidden aria-label="Photo" onChange={e => pick(e.target.files?.[0])} />
-        {(linking || link) && !photo && (
-          <input className="grow" type="url" value={link} onChange={e => { setLink(e.target.value); setDropPhoto(false); }} placeholder="Paste an image link from the web" aria-label="Photo link" />
-        )}
       </div>
       {!hasPhoto && <Swatches value={color} onChange={setColor} />}
       <div className="acts">
