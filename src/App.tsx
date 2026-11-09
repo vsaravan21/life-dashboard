@@ -25,10 +25,8 @@ import { Calendar } from "./sections/Calendar";
 import { Journal } from "./sections/Journal";
 import { LookingBack } from "./sections/LookingBack";
 import { Notes } from "./sections/Notes";
-import { Reading } from "./sections/Reading";
 import { Todos } from "./sections/Todos";
 import { UpNext } from "./sections/UpNext";
-import { Travel } from "./sections/Travel";
 
 const NAME = "Varsha";
 
@@ -100,8 +98,6 @@ function DashboardView({ store, onSignOut, sync }: { store: Store; onSignOut?: (
         <Calendar dash={dash} />
         <Todos dash={dash} />
         <LookingBack dash={dash} />
-        <Travel dash={dash} notify={notify} />
-        <Reading dash={dash} />
         <Journal dash={dash} notify={notify} />
         <Notes dash={dash} />
       </div>

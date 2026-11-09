@@ -1,4 +1,6 @@
-import { AddForm, DateField, Empty, Panel, Remove } from "../components/ui";
+import { AddForm, DateField, Empty, Panel } from "../components/ui";
+import { isVideoRef } from "../lib/media";
+import { Link } from "../lib/router";
 import { fmt } from "../lib/dates";
 import { shrinkPhoto } from "../lib/image";
 import type { Entry } from "../lib/types";
@@ -6,7 +8,7 @@ import type { Dashboard } from "../lib/useDashboard";
 import { useStoredUrl } from "../lib/useStoredUrl";
 
 function Photo({ dash, entry }: { dash: Dashboard; entry: Entry<"journal"> }) {
-  const ref = entry.data.photos?.[0] ?? entry.data.photo;
+  const ref = entry.data.photos?.find(p => !isVideoRef(p)) ?? entry.data.photo;
   const { src, onError, failed: broken, attempt } = useStoredUrl(dash.store, ref);
   return (
     <div className="img">
@@ -18,7 +20,7 @@ function Photo({ dash, entry }: { dash: Dashboard; entry: Entry<"journal"> }) {
 }
 
 export function Journal({ dash, notify }: { dash: Dashboard; notify: (m: string) => void }) {
-  const list = [...dash.entries.journal].sort((a, b) => b.data.date.localeCompare(a.data.date) || b.createdAt.localeCompare(a.createdAt)).slice(0, 12);
+  const list = [...dash.entries.journal].sort((a, b) => b.data.date.localeCompare(a.data.date) || b.createdAt.localeCompare(a.createdAt)).slice(0, 6);
 
   return (
     <Panel id="p-journal" title="Photo journal" cover="c-journal" label="Moments" addLabel="Add moment"
@@ -39,16 +41,15 @@ export function Journal({ dash, notify }: { dash: Dashboard; notify: (m: string)
         </AddForm>
       )}>
       {list.length === 0 ? <Empty>Add a photo and a line about the day.</Empty> : (
-        <div className="photos">
+        <div className="hj-grid">
           {list.map(j => (
-            <figure className="photo" key={j.id}>
+            <Link to="/journal" className="hj-tile" key={j.id} aria-label={j.data.caption}>
               <Photo dash={dash} entry={j} />
-              <figcaption className="cap">
-                <span className="t">{j.data.caption}</span>
-                <span className="meta">{fmt(j.data.date, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
-              </figcaption>
-              <Remove label={j.data.caption} onClick={() => dash.remove(j)} />
-            </figure>
+              <span className="hj-cap">
+                <b>{j.data.caption}</b>
+                <span>{fmt(j.data.date, { month: "short", day: "numeric", year: "numeric" })}</span>
+              </span>
+            </Link>
           ))}
         </div>
       )}
