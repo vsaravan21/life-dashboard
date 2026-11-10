@@ -1,9 +1,8 @@
-import { useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 /**
- * Reorder a list by dragging a handle. Items swap places live as the pointer passes their middle,
- * along whichever way they're laid out (a row or a column), and slide into their new spots.
- * Arrow keys on a focused handle move it one place.
+ * Reorder a list by dragging. Call `moveTo` with the pointer as it moves: items swap places live as it
+ * passes their middle, along whichever way they're laid out (a row or a column), and slide into their new spots.
  */
 export function useDragOrder<T extends string>(order: T[], setOrder: (next: T[]) => void) {
   const els = useRef(new Map<T, HTMLElement>());
@@ -50,35 +49,7 @@ export function useDragOrder<T extends string>(order: T[], setOrder: (next: T[])
     "data-dragging": dragging === id || undefined,
   });
 
-  const handle = (id: T) => ({
-    onPointerDown(e: PointerEvent<HTMLElement>) {
-      if (e.button !== 0) return;
-      e.preventDefault();
-      e.currentTarget.setPointerCapture(e.pointerId);
-      setDragging(id);
-    },
-    onPointerMove(e: PointerEvent<HTMLElement>) {
-      if (dragging !== id) return;
-      moveTo(id, e.clientX, e.clientY);
-      // Scroll the page when dragging near the top or bottom edge.
-      if (e.clientY < 70) window.scrollBy(0, -14);
-      else if (e.clientY > window.innerHeight - 70) window.scrollBy(0, 14);
-    },
-    onPointerUp() { setDragging(null); },
-    onPointerCancel() { setDragging(null); },
-    onKeyDown(e: KeyboardEvent<HTMLElement>) {
-      const step = e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : 0;
-      if (!step) return;
-      e.preventDefault();
-      const list = [...latest.current];
-      const i = list.indexOf(id), j = i + step;
-      if (j < 0 || j >= list.length) return;
-      [list[i], list[j]] = [list[j], list[i]];
-      commit(list);
-    },
-  });
-
-  return { item, handle, dragging };
+  return { item, moveTo, dragging, setDragging };
 }
 
 /** Keep a saved order only if it holds exactly the expected ids; otherwise fall back. */
