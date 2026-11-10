@@ -21,11 +21,7 @@ import { ReadingPage } from "./pages/ReadingPage";
 import { AccountPage } from "./pages/AccountPage";
 import { financeAuth, useFinanceSession } from "./lib/finance";
 import { EmptyPage } from "./pages/PageShell";
-import { Calendar } from "./sections/Calendar";
-import { Journal } from "./sections/Journal";
-import { LookingBack } from "./sections/LookingBack";
-import { Todos } from "./sections/Todos";
-import { UpNext } from "./sections/UpNext";
+import { Home } from "./sections/Home";
 
 const NAME = "Varsha";
 
@@ -92,13 +88,7 @@ function DashboardView({ store, onSignOut, sync }: { store: Store; onSignOut?: (
   const home = (
     <>
       <div className="hero"><Greeting /><Summary dash={dash} /></div>
-      <div className="grid">
-        <UpNext dash={dash} notify={notify} />
-        <Calendar dash={dash} />
-        <Todos dash={dash} />
-        <LookingBack dash={dash} />
-        <Journal dash={dash} notify={notify} />
-      </div>
+      <Home dash={dash} notify={notify} />
     </>
   );
 

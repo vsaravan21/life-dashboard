@@ -95,6 +95,22 @@ main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .panel > :not(.cover) { margin-inline: 14px; }
 .panel-body { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 /* The first row of home cards stays short; what doesn't fit scrolls inside the card. */
+/* Home: sections stack and can be dragged up and down; the three cards share one row and can be shuffled. */
+.home-rows { display: flex; flex-direction: column; gap: 20px; }
+.home-row, .home-card { position: relative; min-width: 0; }
+.home-trio { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1000px) { .home-trio { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.grip { position: absolute; z-index: 5; display: grid; place-items: center; border: 0; padding: 0; cursor: grab; touch-action: none; color: var(--muted);
+  background: var(--solid); box-shadow: 0 2px 10px rgba(20,14,26,.12); opacity: 0; transition: opacity .15s, color .15s; }
+.grip:hover, .grip:focus-visible { color: var(--accent); }
+.row-grip { top: -11px; left: 50%; translate: -50% 0; width: 46px; height: 22px; border-radius: 999px; }
+.card-grip { top: 14px; left: 14px; width: 30px; height: 30px; border-radius: 50%; }
+.home-row:hover > .row-grip, .home-card:hover > .card-grip, .grip:focus-visible, [data-dragging] > .grip { opacity: 1; }
+@media (hover: none) { .grip { opacity: .75; } }
+[data-dragging] { z-index: 4; }
+[data-dragging] > .panel { box-shadow: 0 24px 60px rgba(20,14,26,.22); scale: 1.01; transition: scale .15s, box-shadow .15s; }
+[data-dragging] > .grip { cursor: grabbing; color: var(--accent); }
+body:has([data-dragging]) { user-select: none; cursor: grabbing; }
 @media (min-width: 760px) {
   #p-events, #p-todos, #p-lookback { height: 370px; }
   #p-events .panel-body, #p-todos .panel-body, #p-lookback .panel-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-right: 6px; padding-right: 8px; }
