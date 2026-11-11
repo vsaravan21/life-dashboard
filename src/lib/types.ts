@@ -14,9 +14,9 @@ export interface EventData {
   location?: string;
   description?: string;
 }
-export interface TodoData { text: string; due?: string; done: boolean; doneAt?: number | null; /** The to-do list it belongs to; none for loose tasks. */ listId?: string }
+export interface TodoData { text: string; due?: string; done: boolean; doneAt?: number | null; /** The to-do list it belongs to; none for loose tasks. */ listId?: string; /** Last created or edited, in ms. */ updatedAt?: number }
 /** A named, colored to-do list on the To-do page. `created` is a local day. */
-export interface ListData { title: string; color: string; created: string; /** The one list shown on the home page. */ starred?: boolean }
+export interface ListData { title: string; color: string; created: string; /** The one list shown on the home page. */ starred?: boolean; /** Last created or renamed, in ms. */ updatedAt?: number }
 export interface MoneyData { label: string; amount: number; kind: "expense" | "income"; category?: string; date: string }
 export interface GoalData { title: string; target?: string; progress: number }
 /** One line in an outline: a goal (with a check) or a Looking Back item. `depth` 1 or 2 makes it a sub-item. */

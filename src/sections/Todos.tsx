@@ -2,6 +2,7 @@ import { AddForm, Empty, Panel, Remove } from "../components/ui";
 import { fmt, today } from "../lib/dates";
 import type { Entry } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
+import { newestFirst } from "../lib/recent";
 import { colorOf } from "../pages/TodoPage";
 
 export function Todos({ dash }: { dash: Dashboard }) {
@@ -9,7 +10,7 @@ export function Todos({ dash }: { dash: Dashboard }) {
   // A starred list takes over the card; otherwise it shows every task.
   const starred = dash.entries.lists.find(l => l.data.starred);
   const all = starred ? dash.entries.todos.filter(x => x.data.listId === starred.id) : dash.entries.todos;
-  const open = all.filter(x => !x.data.done).sort((a, b) => (a.data.due || "￿").localeCompare(b.data.due || "￿") || a.createdAt.localeCompare(b.createdAt));
+  const open = all.filter(x => !x.data.done).sort((a, b) => (a.data.due || "￿").localeCompare(b.data.due || "￿") || newestFirst(a, b));
   const done = all.filter(x => x.data.done).sort((a, b) => (b.data.doneAt || 0) - (a.data.doneAt || 0));
 
   const row = (x: Entry<"todos">) => {
@@ -31,7 +32,7 @@ export function Todos({ dash }: { dash: Dashboard }) {
     <Panel id="p-todos" title="To-do" cover={starred ? colorOf(starred.data.color).cover : "c-todos"} addLabel="Add task"
       label={starred ? <span><span className="star-mark" aria-hidden="true">★</span> {starred.data.title}</span> : "On your plate"}
       form={close => (
-        <AddForm onClose={close} onSave={v => dash.add("todos", { text: v.text.trim(), due: v.due || "", done: false, ...(starred ? { listId: starred.id } : {}) })}>
+        <AddForm onClose={close} onSave={v => dash.add("todos", { text: v.text.trim(), due: v.due || "", done: false, updatedAt: Date.now(), ...(starred ? { listId: starred.id } : {}) })}>
           <input className="grow" name="text" placeholder="Task" required aria-label="Task" />
           <input type="date" name="due" aria-label="Due date (optional)" />
         </AddForm>

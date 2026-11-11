@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Remove } from "../components/ui";
 import type { Entry, NoteData } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
+import { newestFirst } from "../lib/recent";
 import { PageShell } from "./PageShell";
 
 const edited = (ms: number) => {
@@ -65,7 +66,7 @@ export function NotesPage({ dash }: { dash: Dashboard }) {
   const all = dash.entries.notes;
   const list = all
     .filter(n => !q || `${n.data.title}\n${n.data.body}`.toLowerCase().includes(q))
-    .sort((a, b) => Number(b.data.pinned) - Number(a.data.pinned) || b.data.updatedAt - a.data.updatedAt);
+    .sort((a, b) => Number(b.data.pinned) - Number(a.data.pinned) || newestFirst(a, b));
   const open = all.find(n => n.id === openId) ?? null;
 
   // On wide screens, show the most recent note instead of an empty editor.

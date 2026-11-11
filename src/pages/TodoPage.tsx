@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { fmt, today } from "../lib/dates";
 import type { Entry } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
+import { newestFirst } from "../lib/recent";
 import { PageShell } from "./PageShell";
 
 /** List colors: the same blurred pastel paints as the section covers. */
@@ -43,7 +44,7 @@ function Task({ task, dash }: { task: Entry<"todos">; dash: Dashboard }) {
   const save = () => {
     const t = text.trim();
     if (!t) return dash.remove(task);
-    if (t !== task.data.text) dash.patch(task, { text: t });
+    if (t !== task.data.text) dash.patch(task, { text: t, updatedAt: Date.now() });
   };
   const key = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") e.currentTarget.blur();
@@ -67,7 +68,7 @@ export function star(list: Entry<"lists">, dash: Dashboard) {
   dash.patch(list, { starred: on });
 }
 
-/** One list card: its tasks in the order they were added, then a "New task" line. */
+/** One list card: a "New task" line, then its tasks with the most recently added or edited first. */
 function ListCard({ list, tasks, dash, focusNew }: { list: Entry<"lists"> | null; tasks: Entry<"todos">[]; dash: Dashboard; focusNew: boolean }) {
   const [draft, setDraft] = useState("");
   const [title, setTitle] = useState(list?.data.title ?? "Tasks");
@@ -81,14 +82,14 @@ function ListCard({ list, tasks, dash, focusNew }: { list: Entry<"lists"> | null
   const add = () => {
     const text = draft.trim();
     if (!text) return;
-    dash.add("todos", { text, done: false, due: "", ...(list ? { listId: list.id } : {}) });
+    dash.add("todos", { text, done: false, due: "", updatedAt: Date.now(), ...(list ? { listId: list.id } : {}) });
     setDraft("");
   };
   const saveTitle = () => {
     if (!list) return;
     const t = title.trim() || "Untitled list";
     setTitle(t);
-    if (t !== list.data.title) dash.patch(list, { title: t });
+    if (t !== list.data.title) dash.patch(list, { title: t, updatedAt: Date.now() });
   };
   const removeList = async () => {
     if (!list) return;
@@ -131,12 +132,12 @@ function ListCard({ list, tasks, dash, focusNew }: { list: Entry<"lists"> | null
         </div>
       )}
       <ul className="tl-tasks">
-        {tasks.map(t => <Task key={t.id} task={t} dash={dash} />)}
         <li className="tl-task tl-new">
           <span className="tl-check" aria-hidden="true"><Check done={false} /></span>
           <input ref={newRef} className="tl-text" value={draft} placeholder="New task" aria-label={`New task in ${title}`}
             onChange={e => setDraft(e.target.value)} onKeyDown={e => e.key === "Enter" && add()} onBlur={add} />
         </li>
+        {tasks.map(t => <Task key={t.id} task={t} dash={dash} />)}
       </ul>
       {tasks.length > 0 && <div className="tl-foot">{done} of {tasks.length} done</div>}
     </section>
@@ -149,13 +150,13 @@ export function TodoPage({ dash }: { dash: Dashboard }) {
   const [color, setColor] = useState(DEFAULT_COLOR);
   const [fresh, setFresh] = useState<string | null>(null);
 
-  const lists = [...dash.entries.lists].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const lists = [...dash.entries.lists].sort(newestFirst);
   const ids = new Set(lists.map(l => l.id));
-  const tasks = [...dash.entries.todos].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const tasks = [...dash.entries.todos].sort(newestFirst);
   const loose = tasks.filter(t => !t.data.listId || !ids.has(t.data.listId));
 
   const create = async () => {
-    const l = await dash.add("lists", { title: name.trim() || "Untitled list", color, created: today() });
+    const l = await dash.add("lists", { title: name.trim() || "Untitled list", color, created: today(), updatedAt: Date.now() });
     if (l) setFresh(l.id);
     setName("");
     setComposing(false);

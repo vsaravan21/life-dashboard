@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Empty, Panel, Remove, plural } from "../components/ui";
 import type { Entry, NoteData } from "../lib/types";
 import type { Dashboard } from "../lib/useDashboard";
+import { newestFirst } from "../lib/recent";
 
 function NoteEditor({ initial, onSave, onClose }: {
   initial?: Pick<NoteData, "title" | "body">;
@@ -44,7 +45,7 @@ export function Notes({ dash }: { dash: Dashboard }) {
   const all = dash.entries.notes;
   const list = all
     .filter(n => !q || `${n.data.title}\n${n.data.body}`.toLowerCase().includes(q))
-    .sort((a, b) => Number(b.data.pinned) - Number(a.data.pinned) || b.data.updatedAt - a.data.updatedAt);
+    .sort((a, b) => Number(b.data.pinned) - Number(a.data.pinned) || newestFirst(a, b));
 
   const save = (n: Entry<"notes">) => (title: string, body: string) => dash.patch(n, { title, body, updatedAt: Date.now() });
 
